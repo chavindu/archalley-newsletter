@@ -83,6 +83,7 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
             line-height: 100%;
             outline: none;
             text-decoration: none;
+            max-width: 100%;
         }
         
         /* Main styles */
@@ -155,12 +156,16 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
             vertical-align: top;
             width: 40%;
             background: #f8f9fa;
+            line-height: 0;
         }
         
         .post-image {
             width: 100%;
-            height: 200px;
+            height: auto;
+            max-height: 200px;
             display: block;
+            object-fit: contain;
+            object-position: center;
         }
         
         .post-title {
@@ -267,7 +272,10 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
                 display: block !important;
             }
             .post-image {
-                height: 150px;
+                height: auto;
+                max-height: 150px;
+                object-fit: contain;
+                object-position: center;
             }
             .post-title {
                 font-size: 18px;
@@ -323,7 +331,9 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
         .post-image[class="post-image"] {
             width: 100% !important;
             height: auto !important;
-            max-width: 200px !important;
+            max-height: 200px !important;
+            object-fit: contain !important;
+            object-position: center !important;
         }
     </style>
 </head>
