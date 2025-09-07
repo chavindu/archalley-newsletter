@@ -73,16 +73,25 @@ export default function NewNewsletter() {
       if (!response.ok) throw new Error('Failed to fetch posts')
       
       const data = await response.json()
-      // Convert stored posts to EmailPost format
-      const emailPosts = data.posts.map((post: any) => ({
-        id: post.wp_post_id,
-        title: post.title,
-        excerpt: post.excerpt || '',
-        link: post.link,
-        featured_image: post.featured_image_url,
-        categories: post.categories.map((cat: any) => cat.name),
-        date: post.published_date
-      }))
+      // Convert stored posts to EmailPost format with word limit applied
+      const emailPosts = data.posts.map((post: any) => {
+        // Apply 35-word limit to excerpt
+        const excerpt = post.excerpt || ''
+        const words = excerpt.split(' ')
+        const limitedExcerpt = words.length > 35 
+          ? words.slice(0, 35).join(' ') + '...'
+          : excerpt
+        
+        return {
+          id: post.wp_post_id,
+          title: post.title,
+          excerpt: limitedExcerpt,
+          link: post.link,
+          featured_image: post.featured_image_url,
+          categories: post.categories.map((cat: any) => cat.name),
+          date: post.published_date
+        }
+      })
       
       setWpPosts(emailPosts)
     } catch (error) {
