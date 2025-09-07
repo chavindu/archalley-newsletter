@@ -5,23 +5,46 @@ import { useRouter } from 'next/router'
 import {
   ArrowLeftIcon,
   DocumentTextIcon,
+  NewspaperIcon,
+  PlusIcon,
+  XMarkIcon,
+  ClockIcon,
+  PaperAirplaneIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase, EmailList } from '@/lib/supabase'
+import { EmailPost } from '@/lib/email'
 
 export default function NewNewsletter() {
   const router = useRouter()
   const { data: session } = useSession()
   const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
   const [emailLists, setEmailLists] = useState<EmailList[]>([])
   const [selectedEmailLists, setSelectedEmailLists] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
+  
+  // WordPress posts state
+  const [wpPosts, setWpPosts] = useState<EmailPost[]>([])
+  const [selectedPosts, setSelectedPosts] = useState<EmailPost[]>([])
+  const [loadingPosts, setLoadingPosts] = useState(false)
+  
+  // Send options
+  const [sendOption, setSendOption] = useState<'now' | 'schedule'>('now')
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('')
 
   useEffect(() => {
-    fetchEmailLists()
+    const initializePage = async () => {
+      await Promise.all([
+        fetchEmailLists(),
+        fetchWordPressPosts() // Automatically load posts when page loads
+      ])
+    }
+    
+    initializePage()
   }, [])
 
   const fetchEmailLists = async () => {
@@ -43,14 +66,84 @@ export default function NewNewsletter() {
     setSnackbar({ open: true, message, severity })
   }
 
+  const fetchWordPressPosts = async () => {
+    setLoadingPosts(true)
+    try {
+      const response = await fetch('/api/wordpress/posts-stored?limit=20')
+      if (!response.ok) throw new Error('Failed to fetch posts')
+      
+      const data = await response.json()
+      // Convert stored posts to EmailPost format
+      const emailPosts = data.posts.map((post: any) => ({
+        id: post.wp_post_id,
+        title: post.title,
+        excerpt: post.excerpt || '',
+        link: post.link,
+        featured_image: post.featured_image_url,
+        categories: post.categories.map((cat: any) => cat.name),
+        date: post.published_date
+      }))
+      
+      setWpPosts(emailPosts)
+    } catch (error) {
+      console.error('Error fetching WordPress posts:', error)
+      showSnackbar('Error fetching WordPress posts', 'error')
+    } finally {
+      setLoadingPosts(false)
+    }
+  }
+
+  const addPostToNewsletter = (post: EmailPost) => {
+    if (!selectedPosts.find(p => p.id === post.id)) {
+      setSelectedPosts([...selectedPosts, post])
+    }
+  }
+
+  const removePostFromNewsletter = (postId: number) => {
+    setSelectedPosts(selectedPosts.filter(p => p.id !== postId))
+  }
+
+  const generateNewsletterContent = () => {
+    if (selectedPosts.length === 0) {
+      showSnackbar('Please select at least one post', 'error')
+      return
+    }
+
+    const postsHtml = selectedPosts.map(post => `
+      <div class="post-item" style="margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 18px;">
+          <a href="${post.link}" style="color: #333; text-decoration: none;">${post.title}</a>
+        </h3>
+        <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
+          ${new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+        <p style="margin: 0 0 10px 0; color: #555; line-height: 1.5;">
+          ${post.excerpt}
+        </p>
+        <a href="${post.link}" style="color: #FFA500; text-decoration: none; font-weight: bold;">
+          Read Full Article →
+        </a>
+      </div>
+    `).join('')
+
+    const newsletterContent = `
+      <div class="newsletter-content">
+        <h2 style="color: #333; margin-bottom: 20px;">Latest from Archalley</h2>
+        ${postsHtml}
+      </div>
+    `
+
+    return newsletterContent
+  }
+
   const handleSave = async () => {
     if (!title.trim()) {
       showSnackbar('Please enter a newsletter title', 'error')
       return
     }
 
-    if (!content.trim()) {
-      showSnackbar('Please enter newsletter content', 'error')
+    if (selectedPosts.length === 0) {
+      showSnackbar('Please select at least one WordPress post', 'error')
       return
     }
 
@@ -59,25 +152,79 @@ export default function NewNewsletter() {
       return
     }
 
+    if (sendOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
+      showSnackbar('Please select a date and time for scheduling', 'error')
+      return
+    }
+
     setLoading(true)
 
     try {
+      // Generate newsletter content from selected posts
+      const content = generateNewsletterContent()
+      
+      // Create newsletter data
+      const newsletterData = {
+        content: content,
+        posts: selectedPosts
+      }
+
+      // Determine scheduled time
+      let scheduledAt = null
+      if (sendOption === 'schedule') {
+        const scheduleDateTime = new Date(`${scheduleDate}T${scheduleTime}`)
+        scheduledAt = scheduleDateTime.toISOString()
+      }
+
+      console.log('Creating newsletter with data:', {
+        title,
+        content: newsletterData,
+        selected_posts: selectedPosts.map(p => p.id),
+        email_list_ids: selectedEmailLists,
+        status: sendOption === 'now' ? 'draft' : 'scheduled',
+        scheduled_at: scheduledAt,
+        created_by: session?.user?.id,
+      })
+
       const { data, error } = await supabase
         .from('newsletters')
         .insert({
           title,
-          content,
-          selected_posts: [],
+          content: JSON.stringify(newsletterData),
+          selected_posts: JSON.stringify(selectedPosts.map(p => p.id)),
           email_list_ids: selectedEmailLists,
-          status: 'draft',
+          status: sendOption === 'now' ? 'draft' : 'scheduled',
+          scheduled_at: scheduledAt,
           created_by: session?.user?.id,
         })
         .select()
         .single()
 
-      if (error) throw error
-      showSnackbar('Newsletter created successfully', 'success')
-      router.push(`/newsletters/${data.id}`)
+      if (error) {
+        console.error('Database error creating newsletter:', error)
+        throw error
+      }
+
+      if (sendOption === 'now') {
+        // Send immediately
+        const sendResponse = await fetch(`/api/newsletters/send/${data.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+
+        if (sendResponse.ok) {
+          const sendResult = await sendResponse.json()
+          showSnackbar(`Newsletter sent successfully! Sent to ${sendResult.sent} subscribers.`, 'success')
+        } else {
+          showSnackbar('Newsletter created but failed to send. Please try sending manually.', 'error')
+        }
+      } else {
+        showSnackbar('Newsletter scheduled successfully!', 'success')
+      }
+
+      router.push('/newsletters')
     } catch (error) {
       console.error('Error creating newsletter:', error)
       showSnackbar('Error creating newsletter', 'error')
@@ -117,44 +264,155 @@ export default function NewNewsletter() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+              {/* Newsletter Title */}
               <div className="card p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Newsletter Details
+                  Newsletter Title
                 </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      id="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="input-field"
-                      placeholder="Enter newsletter title"
-                    />
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="input-field"
+                  placeholder="Enter newsletter title"
+                />
+              </div>
+
+              {/* WordPress Posts Section */}
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Select WordPress Posts
+                  </h2>
+                  <button
+                    onClick={fetchWordPressPosts}
+                    disabled={loadingPosts}
+                    className="btn-secondary flex items-center"
+                  >
+                    {loadingPosts ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowPathIcon className="h-5 w-5 mr-2" />
+                        Refresh Posts
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {selectedPosts.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-gray-700 mb-3">
+                      Selected Posts ({selectedPosts.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedPosts.map((post) => (
+                        <div key={post.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg border">
+                          <div className="flex-1 flex items-start space-x-3">
+                            {post.featured_image && (
+                              <img
+                                src={post.featured_image}
+                                alt={post.title}
+                                className="w-16 h-16 object-cover rounded flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <h4 className="text-sm font-medium text-gray-900 mb-1">{post.title}</h4>
+                              <p className="text-xs text-gray-500 mb-2">
+                                {new Date(post.date).toLocaleDateString()}
+                              </p>
+                              {post.excerpt && (
+                                <p className="text-xs text-gray-600 line-clamp-2">
+                                  {post.excerpt.replace(/<[^>]*>/g, '')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removePostFromNewsletter(post.id)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                )}
+
+                {/* Available Posts */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Available Posts ({wpPosts.length})
+                  </h3>
                   
-                  <div>
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                      Content
-                    </label>
-                    <textarea
-                      id="content"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      className="input-field"
-                      rows={10}
-                      placeholder="Enter newsletter content (HTML supported)"
-                    />
-                  </div>
+                  {loadingPosts ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                    </div>
+                  ) : wpPosts.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <NewspaperIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p>No posts available</p>
+                      <p className="text-sm">Click "Refresh Posts" to load posts from the database</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-96 overflow-y-auto space-y-3">
+                      {wpPosts.map((post) => (
+                        <div key={post.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50">
+                          <div className="flex-1 flex items-start space-x-3">
+                            {post.featured_image ? (
+                              <img
+                                src={post.featured_image}
+                                alt={post.title}
+                                className="w-16 h-16 object-cover rounded flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center">
+                                <NewspaperIcon className="h-6 w-6 text-gray-400" />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <h4 className="text-sm font-medium text-gray-900 mb-1">{post.title}</h4>
+                              <p className="text-xs text-gray-500 mb-2">
+                                {new Date(post.date).toLocaleDateString()}
+                              </p>
+                              {post.excerpt && (
+                                <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                                  {post.excerpt.replace(/<[^>]*>/g, '')}
+                                </p>
+                              )}
+                              {post.categories.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {post.categories.slice(0, 3).map((category, index) => (
+                                    <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      {category}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => addPostToNewsletter(post)}
+                            disabled={selectedPosts.find(p => p.id === post.id) !== undefined}
+                            className="ml-3 btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                          >
+                            {selectedPosts.find(p => p.id === post.id) ? 'Added' : 'Add'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
+              {/* Email Lists */}
               <div className="card p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Email Lists
@@ -177,6 +435,76 @@ export default function NewNewsletter() {
                 </div>
               </div>
 
+              {/* Send Options */}
+              <div className="card p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Send Options
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="sendOption"
+                        value="now"
+                        checked={sendOption === 'now'}
+                        onChange={(e) => setSendOption(e.target.value as 'now' | 'schedule')}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                      />
+                      <span className="ml-3 text-sm text-gray-700 flex items-center">
+                        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                        Send Now
+                      </span>
+                    </label>
+                    
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="sendOption"
+                        value="schedule"
+                        checked={sendOption === 'schedule'}
+                        onChange={(e) => setSendOption(e.target.value as 'now' | 'schedule')}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                      />
+                      <span className="ml-3 text-sm text-gray-700 flex items-center">
+                        <ClockIcon className="h-4 w-4 mr-2" />
+                        Schedule for Later
+                      </span>
+                    </label>
+                  </div>
+
+                  {sendOption === 'schedule' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Date
+                        </label>
+                        <input
+                          type="date"
+                          value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="input-field"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Time
+                        </label>
+                        <input
+                          type="time"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          className="input-field"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Button */}
               <div className="card p-6">
                 <button
                   onClick={handleSave}
@@ -186,12 +514,21 @@ export default function NewNewsletter() {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Creating...
+                      {sendOption === 'now' ? 'Sending...' : 'Scheduling...'}
                     </>
                   ) : (
                     <>
-                      <DocumentTextIcon className="h-5 w-5 mr-2" />
-                      Create Newsletter
+                      {sendOption === 'now' ? (
+                        <>
+                          <PaperAirplaneIcon className="h-5 w-5 mr-2" />
+                          Send Newsletter
+                        </>
+                      ) : (
+                        <>
+                          <ClockIcon className="h-5 w-5 mr-2" />
+                          Schedule Newsletter
+                        </>
+                      )}
                     </>
                   )}
                 </button>

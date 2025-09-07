@@ -8,6 +8,7 @@ import {
   UsersIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  NewspaperIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -31,6 +32,7 @@ export default function Layout({ children }: LayoutProps) {
     { text: 'Dashboard', icon: HomeIcon, href: '/dashboard' },
     { text: 'Email Lists', icon: EnvelopeIcon, href: '/email-lists' },
     { text: 'Newsletters', icon: MegaphoneIcon, href: '/newsletters' },
+    { text: 'WordPress Posts', icon: NewspaperIcon, href: '/wordpress-posts' },
     { text: 'Analytics', icon: ChartBarIcon, href: '/analytics' },
   ]
 
@@ -46,6 +48,8 @@ export default function Layout({ children }: LayoutProps) {
         return 'Email Lists'
       case '/newsletters':
         return 'Newsletters'
+      case '/wordpress-posts':
+        return 'WordPress Posts'
       case '/analytics':
         return 'Analytics'
       case '/users':

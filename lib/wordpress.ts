@@ -1,3 +1,5 @@
+import { EmailPost } from './email'
+
 export interface WordPressPost {
   id: number
   title: {
@@ -11,6 +13,7 @@ export interface WordPressPost {
   }
   link: string
   date: string
+  modified: string
   featured_media: number
   categories: number[]
   _embedded?: {
@@ -22,6 +25,7 @@ export interface WordPressPost {
       id: number
       name: string
       slug: string
+      taxonomy: string
     }>>
   }
 }
@@ -99,4 +103,22 @@ export function getFeaturedImage(post: WordPressPost): string | null {
 
 export function stripHtmlTags(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim()
+}
+
+// Convert WordPressPost to EmailPost format
+export function convertWordPressPostToEmailPost(wpPost: WordPressPost): EmailPost {
+  return {
+    id: wpPost.id,
+    title: stripHtmlTags(wpPost.title.rendered),
+    excerpt: stripHtmlTags(wpPost.excerpt.rendered),
+    link: wpPost.link,
+    featured_image: getFeaturedImage(wpPost),
+    categories: getCategoryNames(wpPost),
+    date: wpPost.date
+  }
+}
+
+// Convert array of WordPressPosts to EmailPosts
+export function convertWordPressPostsToEmailPosts(wpPosts: WordPressPost[]): EmailPost[] {
+  return wpPosts.map(convertWordPressPostToEmailPost)
 }

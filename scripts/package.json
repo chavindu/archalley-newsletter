@@ -1,0 +1,20 @@
+{
+  "name": "wordpress-posts-sync",
+  "version": "1.0.0",
+  "description": "Automated WordPress posts sync cron job",
+  "main": "sync-wordpress-posts.js",
+  "scripts": {
+    "start": "node sync-wordpress-posts.js",
+    "dev": "nodemon sync-wordpress-posts.js"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["wordpress", "sync", "cron", "newsletter"],
+  "author": "Archalley Newsletter System",
+  "license": "MIT"
+}
