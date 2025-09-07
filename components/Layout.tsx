@@ -9,6 +9,7 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   NewspaperIcon,
+  AtSymbolIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -33,6 +34,7 @@ export default function Layout({ children }: LayoutProps) {
     { text: 'Email Lists', icon: EnvelopeIcon, href: '/email-lists' },
     { text: 'Newsletters', icon: MegaphoneIcon, href: '/newsletters' },
     { text: 'WordPress Posts', icon: NewspaperIcon, href: '/wordpress-posts' },
+    { text: 'WordPress Emails', icon: AtSymbolIcon, href: '/wordpress-emails' },
     { text: 'Analytics', icon: ChartBarIcon, href: '/analytics' },
   ]
 
@@ -50,6 +52,8 @@ export default function Layout({ children }: LayoutProps) {
         return 'Newsletters'
       case '/wordpress-posts':
         return 'WordPress Posts'
+      case '/wordpress-emails':
+        return 'WordPress Emails'
       case '/analytics':
         return 'Analytics'
       case '/users':

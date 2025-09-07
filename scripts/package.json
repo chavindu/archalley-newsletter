@@ -5,7 +5,9 @@
   "main": "sync-wordpress-posts.js",
   "scripts": {
     "start": "node sync-wordpress-posts.js",
-    "dev": "nodemon sync-wordpress-posts.js"
+    "start-emails": "node sync-wordpress-emails.js",
+    "dev": "nodemon sync-wordpress-posts.js",
+    "dev-emails": "nodemon sync-wordpress-emails.js"
   },
   "dependencies": {
     "node-cron": "^3.0.3",
