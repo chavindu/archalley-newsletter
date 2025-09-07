@@ -86,3 +86,5 @@ CREATE POLICY "Users can manage newsletters" ON newsletters FOR ALL USING (true)
 
 CREATE POLICY "Users can view analytics" ON newsletter_analytics FOR SELECT USING (true);
 CREATE POLICY "Users can insert analytics" ON newsletter_analytics FOR INSERT WITH CHECK (true);
+-- Allow updates to tracking fields from public (needed for open/click tracking)
+CREATE POLICY "Users can update analytics" ON newsletter_analytics FOR UPDATE USING (true) WITH CHECK (true);
