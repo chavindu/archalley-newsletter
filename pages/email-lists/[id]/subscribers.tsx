@@ -147,7 +147,7 @@ export default function Subscribers() {
             })
           }
         })
-        setCsvData([...new Set(emails)]) // Remove duplicates
+        setCsvData(Array.from(new Set(emails))) // Remove duplicates
       },
       header: false,
     })
