@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
@@ -23,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // First, check if this is the default super admin
+    const supabaseAdmin = getSupabaseAdmin()
     const { data: user, error: fetchError } = await supabaseAdmin
       .from('users')
       .select('email')

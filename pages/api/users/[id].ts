@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
@@ -34,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Update user using service role (bypasses RLS)
+    const supabaseAdmin = getSupabaseAdmin()
     const { data, error } = await supabaseAdmin
       .from('users')
       .update({
