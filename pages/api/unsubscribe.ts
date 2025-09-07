@@ -34,10 +34,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 .logo { color: #FFA500; font-size: 32px; font-weight: bold; margin-bottom: 20px; }
                 h1 { color: #333; margin-bottom: 20px; }
                 p { color: #666; line-height: 1.6; margin-bottom: 20px; }
-                .btn { display: inline-block; background-color: #FFA500; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 5px; }
-                .btn:hover { background-color: #e69500; }
-                .btn-secondary { background-color: #28a745; }
-                .btn-secondary:hover { background-color: #218838; }
+                .btn { display: inline-block; background-color: #FFA500; color: white !important; padding: 12px 24px; text-decoration: none !important; border-radius: 5px; font-weight: bold; margin: 5px; }
+                .btn:hover { background-color: #e69500; color: white !important; }
+                .btn:visited { color: white !important; }
+                .btn:link { color: white !important; }
+                .btn-secondary { background-color: #28a745; color: white !important; }
+                .btn-secondary:hover { background-color: #218838; color: white !important; }
+                .btn-secondary:visited { color: white !important; }
+                .btn-secondary:link { color: white !important; }
                 .btn-group { margin-top: 20px; }
                 .loading { opacity: 0.6; pointer-events: none; }
                 .message { margin-top: 15px; padding: 10px; border-radius: 5px; }
@@ -111,12 +115,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 .logo { color: #FFA500; font-size: 32px; font-weight: bold; margin-bottom: 20px; }
                 h1 { color: #333; margin-bottom: 20px; }
                 p { color: #666; line-height: 1.6; margin-bottom: 20px; }
-                .btn { display: inline-block; background-color: #FFA500; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 5px; }
-                .btn:hover { background-color: #e69500; }
-                .btn-danger { background-color: #dc3545; }
-                .btn-danger:hover { background-color: #c82333; }
-                .btn-secondary { background-color: #6c757d; }
-                .btn-secondary:hover { background-color: #5a6268; }
+                .btn { display: inline-block; background-color: #FFA500; color: white !important; padding: 12px 24px; text-decoration: none !important; border-radius: 5px; font-weight: bold; margin: 5px; }
+                .btn:hover { background-color: #e69500; color: white !important; }
+                .btn:visited { color: white !important; }
+                .btn:link { color: white !important; }
+                .btn-danger { background-color: #dc3545; color: white !important; }
+                .btn-danger:hover { background-color: #c82333; color: white !important; }
+                .btn-danger:visited { color: white !important; }
+                .btn-danger:link { color: white !important; }
+                .btn-secondary { background-color: #6c757d; color: white !important; }
+                .btn-secondary:hover { background-color: #5a6268; color: white !important; }
+                .btn-secondary:visited { color: white !important; }
+                .btn-secondary:link { color: white !important; }
                 .btn-group { margin-top: 20px; }
                 .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
             </style>
@@ -179,10 +189,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               .logo { color: #FFA500; font-size: 32px; font-weight: bold; margin-bottom: 20px; }
               h1 { color: #333; margin-bottom: 20px; }
               p { color: #666; line-height: 1.6; margin-bottom: 20px; }
-              .btn { display: inline-block; background-color: #FFA500; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 5px; }
-              .btn:hover { background-color: #e69500; }
-              .btn-secondary { background-color: #28a745; }
-              .btn-secondary:hover { background-color: #218838; }
+                .btn { display: inline-block; background-color: #FFA500; color: white !important; padding: 12px 24px; text-decoration: none !important; border-radius: 5px; font-weight: bold; margin: 5px; }
+                .btn:hover { background-color: #e69500; color: white !important; }
+                .btn:visited { color: white !important; }
+                .btn:link { color: white !important; }
+                .btn-secondary { background-color: #28a745; color: white !important; }
+                .btn-secondary:hover { background-color: #218838; color: white !important; }
+                .btn-secondary:visited { color: white !important; }
+                .btn-secondary:link { color: white !important; }
               .btn-group { margin-top: 20px; }
               .loading { opacity: 0.6; pointer-events: none; }
               .message { margin-top: 15px; padding: 10px; border-radius: 5px; }

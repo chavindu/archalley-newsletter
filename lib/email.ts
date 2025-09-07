@@ -689,15 +689,22 @@ export function generateUnsubscribeEmailHTML(email: string, unsubscribeToken?: s
         .resubscribe-btn {
             display: inline-block;
             background-color: #28a745;
-            color: white;
+            color: white !important;
             padding: 12px 24px;
-            text-decoration: none;
+            text-decoration: none !important;
             border-radius: 5px;
             font-weight: bold;
             margin: 10px 5px;
         }
         .resubscribe-btn:hover {
             background-color: #218838;
+            color: white !important;
+        }
+        .resubscribe-btn:visited {
+            color: white !important;
+        }
+        .resubscribe-btn:link {
+            color: white !important;
         }
         .btn-group {
             margin-top: 20px;
@@ -724,7 +731,7 @@ export function generateUnsubscribeEmailHTML(email: string, unsubscribeToken?: s
             
             <div class="btn-group">
                 <a href="${resubscribeUrl}" class="resubscribe-btn">Resubscribe to Newsletter</a>
-                <a href="https://archalley.com" class="resubscribe-btn" style="background-color: #FFA500;">Visit Archalley.com</a>
+                <a href="https://archalley.com" class="resubscribe-btn" style="background-color: #FFA500; color: white !important;">Visit Archalley.com</a>
             </div>
         </div>
         
