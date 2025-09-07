@@ -96,34 +96,50 @@ export default function Users() {
 
     try {
       if (editingUser) {
-        const { error } = await supabase
-          .from('users')
-          .update({
+        const response = await fetch(`/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: editingUser.id,
             email: formData.email,
             name: formData.name,
             role: formData.role,
-          })
-          .eq('id', editingUser.id)
+          }),
+        })
 
-        if (error) throw error
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to update user')
+        }
+
         showSnackbar('User updated successfully', 'success')
       } else {
-        const { error } = await supabase
-          .from('users')
-          .insert({
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             email: formData.email,
             name: formData.name,
             role: formData.role,
-          })
+          }),
+        })
 
-        if (error) {
-          if (error.code === '23505') {
+        const result = await response.json()
+
+        if (!response.ok) {
+          if (response.status === 409) {
             showSnackbar('A user with this email already exists', 'error')
           } else {
-            throw error
+            throw new Error(result.message || 'Failed to create user')
           }
           return
         }
+
         showSnackbar('User created successfully', 'success')
       }
 
@@ -146,12 +162,16 @@ export default function Users() {
     }
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', id)
+      const response = await fetch(`/api/users/${id}/delete`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to delete user')
+      }
+
       showSnackbar('User deleted successfully', 'success')
       fetchUsers()
     } catch (error) {
