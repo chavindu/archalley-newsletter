@@ -3,30 +3,11 @@ import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Grid,
-  IconButton,
-  Chip,
-  Alert,
-  Snackbar,
-} from '@mui/material'
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Upload as UploadIcon,
-  People as PeopleIcon,
-} from '@mui/icons-material'
-import { DataGrid, GridColDef } from '@mui/x-data-grid'
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  UsersIcon,
+} from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase, EmailList } from '@/lib/supabase'
@@ -146,149 +127,198 @@ export default function EmailLists() {
     }
   }
 
-  const columns: GridColDef[] = [
-    {
-      field: 'name',
-      headerName: 'Name',
-      flex: 1,
-      minWidth: 200,
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      flex: 1,
-      minWidth: 250,
-    },
-    {
-      field: 'subscriber_count',
-      headerName: 'Subscribers',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          icon={<PeopleIcon />}
-          label={params.row.subscribers?.[0]?.count || 0}
-          size="small"
-          color="primary"
-          onClick={() => router.push(`/email-lists/${params.row.id}/subscribers`)}
-          sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'primary.dark' } }}
-        />
-      ),
-    },
-    {
-      field: 'created_at',
-      headerName: 'Created',
-      width: 120,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Box>
-          <IconButton
-            size="small"
-            onClick={() => handleOpenDialog(params.row)}
-            color="primary"
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => handleDelete(params.row.id)}
-            color="error"
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ]
-
   return (
     <ProtectedRoute>
       <Layout>
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1">
+        <div>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
               Email Lists
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+            </h1>
+            <button
               onClick={() => handleOpenDialog()}
+              className="btn-primary flex items-center"
             >
+              <PlusIcon className="h-5 w-5 mr-2" />
               Create Email List
-            </Button>
-          </Box>
+            </button>
+          </div>
 
-          <Card>
-            <CardContent>
-              <DataGrid
-                rows={emailLists}
-                columns={columns}
-                loading={loading}
-                autoHeight
-                disableRowSelectionOnClick
-                initialState={{
-                  pagination: {
-                    paginationModel: { page: 0, pageSize: 10 },
-                  },
-                }}
-                pageSizeOptions={[10, 25, 50]}
-              />
-            </CardContent>
-          </Card>
+          <div className="card p-6">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
+                <p className="mt-2 text-gray-500">Loading email lists...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Subscribers
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {emailLists.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                          No email lists found. Create your first email list to get started.
+                        </td>
+                      </tr>
+                    ) : (
+                      emailLists.map((list) => (
+                        <tr key={list.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {list.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-500 max-w-xs truncate">
+                              {list.description || '-'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => router.push(`/email-lists/${list.id}/subscribers`)}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 hover:bg-primary-200 transition-colors"
+                            >
+                              <UsersIcon className="h-3 w-3 mr-1" />
+                              {(list as any).subscribers?.[0]?.count || 0}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(list.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleOpenDialog(list)}
+                                className="text-primary-600 hover:text-primary-900"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(list.id)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-          <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-            <DialogTitle>
-              {editingList ? 'Edit Email List' : 'Create Email List'}
-            </DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Name"
-                fullWidth
-                variant="outlined"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                margin="dense"
-                label="Description"
-                fullWidth
-                multiline
-                rows={3}
-                variant="outlined"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button onClick={handleSave} variant="contained">
-                {editingList ? 'Update' : 'Create'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+          {/* Dialog */}
+          {openDialog && (
+            <div className="fixed inset-0 z-50 overflow-y-auto">
+              <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={handleCloseDialog}></div>
+                
+                <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                  <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                      {editingList ? 'Edit Email List' : 'Create Email List'}
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="input-field"
+                          placeholder="Enter email list name"
+                          autoFocus
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          id="description"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className="input-field"
+                          rows={3}
+                          placeholder="Enter email list description"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button
+                      onClick={handleSave}
+                      className="btn-primary w-full sm:w-auto sm:ml-3"
+                    >
+                      {editingList ? 'Update' : 'Create'}
+                    </button>
+                    <button
+                      onClick={handleCloseDialog}
+                      className="mt-3 w-full sm:mt-0 sm:w-auto bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={6000}
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-          >
-            <Alert
-              onClose={() => setSnackbar({ ...snackbar, open: false })}
-              severity={snackbar.severity}
-              sx={{ width: '100%' }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
+          {/* Snackbar */}
+          {snackbar.open && (
+            <div className="fixed bottom-4 right-4 z-50">
+              <div className={`p-4 rounded-md shadow-lg ${
+                snackbar.severity === 'success' 
+                  ? 'bg-green-50 border border-green-200 text-green-800' 
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{snackbar.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setSnackbar({ ...snackbar, open: false })}
+                    className="ml-4 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </Layout>
     </ProtectedRoute>
   )

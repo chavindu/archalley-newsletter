@@ -3,59 +3,25 @@ import { GetServerSideProps } from 'next'
 import { getSession, useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Grid,
-  Checkbox,
-  FormControlLabel,
-  Alert,
-  Snackbar,
-  Paper,
-  Avatar,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  OutlinedInput,
-  SelectChangeEvent,
-  CircularProgress,
-} from '@mui/material'
-import {
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon,
-  Send as SendIcon,
-  Image as ImageIcon,
-  Refresh as ResendIcon,
-} from '@mui/icons-material'
+  ArrowLeftIcon,
+  PencilIcon,
+  PaperAirplaneIcon,
+} from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase, EmailList, Newsletter } from '@/lib/supabase'
-import { fetchWordPressPosts, WordPressPost, getCategoryNames, getFeaturedImage, stripHtmlTags } from '@/lib/wordpress'
 
 export default function EditNewsletter() {
   const router = useRouter()
   const { id } = router.query
   const { data: session } = useSession()
   const [newsletter, setNewsletter] = useState<Newsletter | null>(null)
-  const [title, setTitle] = useState('')
-  const [selectedPosts, setSelectedPosts] = useState<WordPressPost[]>([])
-  const [selectedEmailLists, setSelectedEmailLists] = useState<string[]>([])
-  const [emailLists, setEmailLists] = useState<EmailList[]>([])
-  const [wordpressPosts, setWordpressPosts] = useState<WordPressPost[]>([])
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
 
   useEffect(() => {
     if (id) {
       fetchNewsletter()
-      fetchEmailLists()
-      fetchPosts()
     }
   }, [id])
 
@@ -69,53 +35,11 @@ export default function EditNewsletter() {
 
       if (error) throw error
       setNewsletter(data)
-      setTitle(data.title)
-      setSelectedEmailLists(data.email_list_ids || [])
-      
-      // Parse selected posts
-      if (data.selected_posts && data.selected_posts.length > 0) {
-        const postIds = data.selected_posts.map((id: string) => parseInt(id))
-        // We'll set these after fetching WordPress posts
-        setSelectedPosts([]) // Will be populated after fetchPosts
-      }
     } catch (error) {
       console.error('Error fetching newsletter:', error)
       showSnackbar('Error fetching newsletter', 'error')
-    }
-  }
-
-  const fetchEmailLists = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('email_lists')
-        .select('*')
-        .order('name')
-
-      if (error) throw error
-      setEmailLists(data || [])
-    } catch (error) {
-      console.error('Error fetching email lists:', error)
-      showSnackbar('Error fetching email lists', 'error')
-    }
-  }
-
-  const fetchPosts = async () => {
-    try {
-      setLoadingData(true)
-      const { posts } = await fetchWordPressPosts(1, 20)
-      setWordpressPosts(posts)
-      
-      // If we have a newsletter with selected posts, mark them as selected
-      if (newsletter && newsletter.selected_posts) {
-        const postIds = newsletter.selected_posts.map((id: string) => parseInt(id))
-        const selected = posts.filter(post => postIds.includes(post.id))
-        setSelectedPosts(selected)
-      }
-    } catch (error) {
-      console.error('Error fetching WordPress posts:', error)
-      showSnackbar('Error fetching WordPress posts', 'error')
     } finally {
-      setLoadingData(false)
+      setLoading(false)
     }
   }
 
@@ -123,95 +47,12 @@ export default function EditNewsletter() {
     setSnackbar({ open: true, message, severity })
   }
 
-  const handlePostSelection = (post: WordPressPost) => {
-    setSelectedPosts(prev => {
-      const isSelected = prev.some(p => p.id === post.id)
-      if (isSelected) {
-        return prev.filter(p => p.id !== post.id)
-      } else {
-        return [...prev, post]
-      }
-    })
-  }
-
-  const handleEmailListChange = (event: SelectChangeEvent<typeof selectedEmailLists>) => {
-    const value = event.target.value
-    setSelectedEmailLists(typeof value === 'string' ? value.split(',') : value)
-  }
-
-  const handleSave = async (status: 'draft' | 'scheduled' | 'sent' = 'draft') => {
-    if (!title.trim()) {
-      showSnackbar('Please enter a newsletter title', 'error')
-      return
-    }
-
-    if (selectedPosts.length === 0) {
-      showSnackbar('Please select at least one post', 'error')
-      return
-    }
-
-    if (selectedEmailLists.length === 0) {
-      showSnackbar('Please select at least one email list', 'error')
+  const handleSend = async () => {
+    if (!confirm('Are you sure you want to send this newsletter? This will send it to all subscribers in the selected email lists.')) {
       return
     }
 
     try {
-      setLoading(true)
-      const { error } = await supabase
-        .from('newsletters')
-        .update({
-          title,
-          content: generateNewsletterContent(),
-          selected_posts: selectedPosts.map(p => p.id.toString()),
-          email_list_ids: selectedEmailLists,
-          status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-
-      if (error) throw error
-      
-      showSnackbar(`Newsletter ${status === 'draft' ? 'saved' : status === 'sent' ? 'sent' : 'scheduled'} successfully`, 'success')
-      
-      if (status === 'sent') {
-        router.push('/newsletters')
-      }
-    } catch (error) {
-      console.error('Error saving newsletter:', error)
-      showSnackbar('Error saving newsletter', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const generateNewsletterContent = () => {
-    // Function to limit text to specified number of words
-    const limitWords = (text: string, wordLimit: number): string => {
-      const cleanText = stripHtmlTags(text).trim()
-      const words = cleanText.split(/\s+/).filter(word => word.length > 0)
-      
-      if (words.length <= wordLimit) {
-        return cleanText
-      }
-      return words.slice(0, wordLimit).join(' ') + '...'
-    }
-
-    return JSON.stringify({
-      posts: selectedPosts.map(post => ({
-        id: post.id,
-        title: post.title.rendered,
-        excerpt: limitWords(post.excerpt.rendered, 35),
-        link: post.link,
-        featured_image: getFeaturedImage(post),
-        categories: getCategoryNames(post),
-        date: post.date,
-      }))
-    })
-  }
-
-  const handleSendNewsletter = async () => {
-    try {
-      setLoading(true)
       const response = await fetch(`/api/newsletters/send/${id}`, {
         method: 'POST',
         headers: {
@@ -223,55 +64,35 @@ export default function EditNewsletter() {
       
       if (response.ok) {
         showSnackbar(result.message, 'success')
-        router.push('/newsletters')
+        fetchNewsletter()
       } else {
         showSnackbar(result.message || 'Error sending newsletter', 'error')
       }
     } catch (error) {
       console.error('Error sending newsletter:', error)
       showSnackbar('Error sending newsletter', 'error')
-    } finally {
-      setLoading(false)
     }
   }
 
-  const handleResendNewsletter = async () => {
-    if (!confirm('Are you sure you want to resend this newsletter? This will send it again to all subscribers.')) {
-      return
-    }
-
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/newsletters/send/${id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const result = await response.json()
-      
-      if (response.ok) {
-        showSnackbar(result.message, 'success')
-        router.push('/newsletters')
-      } else {
-        showSnackbar(result.message || 'Error resending newsletter', 'error')
-      }
-    } catch (error) {
-      console.error('Error resending newsletter:', error)
-      showSnackbar('Error resending newsletter', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return (
       <ProtectedRoute>
         <Layout>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-            <CircularProgress />
-          </Box>
+          <div className="flex justify-center items-center min-h-screen">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+          </div>
+        </Layout>
+      </ProtectedRoute>
+    )
+  }
+
+  if (!newsletter) {
+    return (
+      <ProtectedRoute>
+        <Layout>
+          <div className="text-center py-8">
+            <p className="text-gray-500">Newsletter not found</p>
+          </div>
         </Layout>
       </ProtectedRoute>
     )
@@ -280,207 +101,131 @@ export default function EditNewsletter() {
   return (
     <ProtectedRoute>
       <Layout>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => router.back()}
-              sx={{ mr: 2 }}
+        <div>
+          <div className="flex items-center mb-8">
+            <button
+              onClick={() => router.push('/newsletters')}
+              className="mr-4 text-gray-500 hover:text-gray-700"
             >
-              Back
-            </Button>
-            <Typography variant="h4" component="h1">
-              Edit Newsletter
-            </Typography>
-          </Box>
+              <ArrowLeftIcon className="h-6 w-6" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900">
+                {newsletter.title}
+              </h1>
+              <p className="text-gray-600">
+                Newsletter Details
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => router.push(`/newsletters/${id}/edit`)}
+                className="btn-secondary flex items-center"
+              >
+                <PencilIcon className="h-5 w-5 mr-2" />
+                Edit
+              </button>
+              {newsletter.status === 'draft' && (
+                <button
+                  onClick={handleSend}
+                  className="btn-primary flex items-center"
+                >
+                  <PaperAirplaneIcon className="h-5 w-5 mr-2" />
+                  Send Newsletter
+                </button>
+              )}
+            </div>
+          </div>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Newsletter Details
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    label="Newsletter Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    sx={{ mb: 2 }}
-                  />
-                  <FormControl fullWidth>
-                    <InputLabel>Email Lists</InputLabel>
-                    <Select
-                      multiple
-                      value={selectedEmailLists}
-                      onChange={handleEmailListChange}
-                      input={<OutlinedInput label="Email Lists" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => {
-                            const list = emailLists.find(list => list.id === value)
-                            return (
-                              <Chip key={value} label={list?.name || value} size="small" />
-                            )
-                          })}
-                        </Box>
-                      )}
-                    >
-                      {emailLists.map((list) => (
-                        <MenuItem key={list.id} value={list.id}>
-                          <Checkbox checked={selectedEmailLists.indexOf(list.id) > -1} />
-                          {list.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="card p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Newsletter Content
+                </h2>
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: newsletter.content }}
+                />
+              </div>
+            </div>
 
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Select Posts from Archalley.com
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Choose the blog posts you want to include in your newsletter
-                  </Typography>
-                  
-                  {loadingData ? (
-                    <Typography>Loading posts...</Typography>
-                  ) : (
-                    <Grid container spacing={2}>
-                      {wordpressPosts.map((post) => (
-                        <Grid item xs={12} key={post.id}>
-                          <Paper
-                            sx={{
-                              p: 2,
-                              cursor: 'pointer',
-                              border: selectedPosts.some(p => p.id === post.id) ? 2 : 1,
-                              borderColor: selectedPosts.some(p => p.id === post.id) ? 'primary.main' : 'divider',
-                              '&:hover': {
-                                boxShadow: 2,
-                              },
-                            }}
-                            onClick={() => handlePostSelection(post)}
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={selectedPosts.some(p => p.id === post.id)}
-                                    onChange={() => handlePostSelection(post)}
-                                  />
-                                }
-                                label=""
-                                sx={{ m: 0 }}
-                              />
-                              {getFeaturedImage(post) && (
-                                <Avatar
-                                  src={getFeaturedImage(post) || ''}
-                                  variant="rounded"
-                                  sx={{ width: 60, height: 60 }}
-                                >
-                                  <ImageIcon />
-                                </Avatar>
-                              )}
-                              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                                <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
-                                  {stripHtmlTags(post.title.rendered)}
-                                </Typography>
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                                  {getCategoryNames(post).map((category) => (
-                                    <Chip key={category} label={category} size="small" variant="outlined" />
-                                  ))}
-                                </Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                  {new Date(post.date).toLocaleDateString()}
-                                </Typography>
-                                <Typography variant="body2" sx={{ 
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden',
-                                }}>
-                                  {stripHtmlTags(post.excerpt.rendered)}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Paper>
-                        </Grid>
-                      ))}
-                    </Grid>
+            <div className="space-y-6">
+              <div className="card p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Newsletter Info
+                </h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Status</dt>
+                    <dd className="text-sm text-gray-900">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        newsletter.status === 'draft' 
+                          ? 'bg-gray-100 text-gray-800' 
+                          : newsletter.status === 'sent'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {newsletter.status}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Created</dt>
+                    <dd className="text-sm text-gray-900">
+                      {new Date(newsletter.created_at).toLocaleDateString()}
+                    </dd>
+                  </div>
+                  {newsletter.sent_at && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Sent</dt>
+                      <dd className="text-sm text-gray-900">
+                        {new Date(newsletter.sent_at).toLocaleDateString()}
+                      </dd>
+                    </div>
                   )}
-                </CardContent>
-              </Card>
-            </Grid>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Selected Posts</dt>
+                    <dd className="text-sm text-gray-900">
+                      {newsletter.selected_posts?.length || 0}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Email Lists</dt>
+                    <dd className="text-sm text-gray-900">
+                      {newsletter.email_list_ids?.length || 0}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
 
-            <Grid item xs={12} md={4}>
-              <Card sx={{ position: 'sticky', top: 100 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Newsletter Summary
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 2 }}>
-                    Selected Posts: {selectedPosts.length}
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 3 }}>
-                    Email Lists: {selectedEmailLists.length}
-                  </Typography>
-                  
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<SaveIcon />}
-                      onClick={() => handleSave('draft')}
-                      disabled={loading}
-                      fullWidth
-                    >
-                      Save as Draft
-                    </Button>
-                    {newsletter?.status !== 'sent' && (
-                      <Button
-                        variant="contained"
-                        startIcon={<SendIcon />}
-                        onClick={handleSendNewsletter}
-                        disabled={loading}
-                        fullWidth
-                      >
-                        Send Newsletter
-                      </Button>
-                    )}
-                    {newsletter?.status === 'sent' && (
-                      <Button
-                        variant="contained"
-                        startIcon={<ResendIcon />}
-                        onClick={handleResendNewsletter}
-                        disabled={loading}
-                        fullWidth
-                        color="secondary"
-                      >
-                        Resend Newsletter
-                      </Button>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={6000}
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-          >
-            <Alert
-              onClose={() => setSnackbar({ ...snackbar, open: false })}
-              severity={snackbar.severity}
-              sx={{ width: '100%' }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
+          {/* Snackbar */}
+          {snackbar.open && (
+            <div className="fixed bottom-4 right-4 z-50">
+              <div className={`p-4 rounded-md shadow-lg ${
+                snackbar.severity === 'success' 
+                  ? 'bg-green-50 border border-green-200 text-green-800' 
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{snackbar.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setSnackbar({ ...snackbar, open: false })}
+                    className="ml-4 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </Layout>
     </ProtectedRoute>
   )

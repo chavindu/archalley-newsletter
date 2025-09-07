@@ -1,7 +1,6 @@
 import { ReactNode, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
-import { Box, CircularProgress } from '@mui/material'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -28,16 +27,9 @@ export default function ProtectedRoute({ children, requireSuperAdmin = false }: 
 
   if (status === 'loading') {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
     )
   }
 

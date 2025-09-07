@@ -2,26 +2,11 @@ import { useState, useEffect } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-} from '@mui/material'
-import {
-  TrendingUp as TrendingUpIcon,
-  Email as EmailIcon,
-  Visibility as VisibilityIcon,
-  TouchApp as ClickIcon,
-} from '@mui/icons-material'
+  EnvelopeIcon,
+  EyeIcon,
+  CursorArrowRaysIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase } from '@/lib/supabase'
@@ -133,146 +118,150 @@ export default function Analytics() {
     color: string
     suffix?: string
   }) => (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ color, mr: 2 }}>
-            {icon}
-          </Box>
-          <Box>
-            <Typography variant="h4" component="div">
-              {value.toLocaleString()}{suffix}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {title}
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+    <div className="card p-6">
+      <div className="flex items-center">
+        <div className={`text-${color}-500 mr-4`}>
+          {icon}
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-gray-900">
+            {value.toLocaleString()}{suffix}
+          </div>
+          <div className="text-sm text-gray-500">
+            {title}
+          </div>
+        </div>
+      </div>
+    </div>
   )
+
+  const getRateColor = (rate: number, type: 'open' | 'click') => {
+    if (type === 'open') {
+      return rate > 20 ? 'bg-green-100 text-green-800' : rate > 10 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+    } else {
+      return rate > 5 ? 'bg-green-100 text-green-800' : rate > 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'
+    }
+  }
 
   return (
     <ProtectedRoute>
       <Layout>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Newsletter Analytics
-          </Typography>
-          <Typography variant="body1" color="text.secondary" gutterBottom>
+          </h1>
+          <p className="text-gray-600 mb-8">
             Track the performance of your newsletters
-          </Typography>
+          </p>
 
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Total Emails Sent"
-                value={analytics.totalSent}
-                icon={<EmailIcon fontSize="large" />}
-                color="#FFA500"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Total Opens"
-                value={analytics.totalOpened}
-                icon={<VisibilityIcon fontSize="large" />}
-                color="#4caf50"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Total Clicks"
-                value={analytics.totalClicked}
-                icon={<ClickIcon fontSize="large" />}
-                color="#2196f3"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Average Open Rate"
-                value={Math.round(analytics.openRate)}
-                icon={<TrendingUpIcon fontSize="large" />}
-                color="#ff9800"
-                suffix="%"
-              />
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <StatCard
+              title="Total Emails Sent"
+              value={analytics.totalSent}
+              icon={<EnvelopeIcon className="h-8 w-8" />}
+              color="primary"
+            />
+            <StatCard
+              title="Total Opens"
+              value={analytics.totalOpened}
+              icon={<EyeIcon className="h-8 w-8" />}
+              color="green"
+            />
+            <StatCard
+              title="Total Clicks"
+              value={analytics.totalClicked}
+              icon={<CursorArrowRaysIcon className="h-8 w-8" />}
+              color="blue"
+            />
+            <StatCard
+              title="Average Open Rate"
+              value={Math.round(analytics.openRate)}
+              icon={<ChartBarIcon className="h-8 w-8" />}
+              color="orange"
+              suffix="%"
+            />
+          </div>
 
-          <Box sx={{ mt: 4 }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Recent Newsletter Performance
-                </Typography>
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Newsletter</TableCell>
-                        <TableCell align="right">Sent</TableCell>
-                        <TableCell align="right">Opens</TableCell>
-                        <TableCell align="right">Clicks</TableCell>
-                        <TableCell align="right">Open Rate</TableCell>
-                        <TableCell align="right">Click Rate</TableCell>
-                        <TableCell align="right">Date Sent</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={7} align="center">
-                            Loading...
-                          </TableCell>
-                        </TableRow>
-                      ) : analytics.recentNewsletters.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} align="center">
-                            No newsletters sent yet
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        analytics.recentNewsletters.map((newsletter) => (
-                          <TableRow key={newsletter.id}>
-                            <TableCell component="th" scope="row">
-                              {newsletter.title}
-                            </TableCell>
-                            <TableCell align="right">
-                              {newsletter.total_sent}
-                            </TableCell>
-                            <TableCell align="right">
-                              {newsletter.total_opened}
-                            </TableCell>
-                            <TableCell align="right">
-                              {newsletter.total_clicked}
-                            </TableCell>
-                            <TableCell align="right">
-                              <Chip
-                                label={`${Math.round(newsletter.open_rate)}%`}
-                                size="small"
-                                color={newsletter.open_rate > 20 ? 'success' : newsletter.open_rate > 10 ? 'warning' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell align="right">
-                              <Chip
-                                label={`${Math.round(newsletter.click_rate)}%`}
-                                size="small"
-                                color={newsletter.click_rate > 5 ? 'success' : newsletter.click_rate > 2 ? 'warning' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell align="right">
-                              {newsletter.sent_at ? new Date(newsletter.sent_at).toLocaleDateString() : 'Not sent'}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
+          <div className="card p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Recent Newsletter Performance
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Newsletter
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sent
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Opens
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Clicks
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Open Rate
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Click Rate
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date Sent
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : analytics.recentNewsletters.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                        No newsletters sent yet
+                      </td>
+                    </tr>
+                  ) : (
+                    analytics.recentNewsletters.map((newsletter) => (
+                      <tr key={newsletter.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {newsletter.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {newsletter.total_sent}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {newsletter.total_opened}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {newsletter.total_clicked}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRateColor(newsletter.open_rate, 'open')}`}>
+                            {Math.round(newsletter.open_rate)}%
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRateColor(newsletter.click_rate, 'click')}`}>
+                            {Math.round(newsletter.click_rate)}%
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {newsletter.sent_at ? new Date(newsletter.sent_at).toLocaleDateString() : 'Not sent'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </Layout>
     </ProtectedRoute>
   )

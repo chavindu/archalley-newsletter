@@ -2,33 +2,12 @@ import { useState, useEffect } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
-  Chip,
-  Alert,
-  Snackbar,
-} from '@mui/material'
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  AdminPanelSettings as AdminIcon,
-  SupervisorAccount as SuperAdminIcon,
-} from '@mui/icons-material'
-import { DataGrid, GridColDef } from '@mui/x-data-grid'
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase, User } from '@/lib/supabase'
@@ -180,165 +159,236 @@ export default function Users() {
     }
   }
 
-  const columns: GridColDef[] = [
-    {
-      field: 'name',
-      headerName: 'Name',
-      flex: 1,
-      minWidth: 200,
-    },
-    {
-      field: 'email',
-      headerName: 'Email',
-      flex: 1,
-      minWidth: 250,
-    },
-    {
-      field: 'role',
-      headerName: 'Role',
-      width: 150,
-      renderCell: (params) => (
-        <Chip
-          icon={params.value === 'superadmin' ? <SuperAdminIcon /> : <AdminIcon />}
-          label={params.value === 'superadmin' ? 'Super Admin' : 'Admin'}
-          size="small"
-          color={params.value === 'superadmin' ? 'secondary' : 'primary'}
-        />
-      ),
-    },
-    {
-      field: 'created_at',
-      headerName: 'Created',
-      width: 120,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (params) => (
-        <Box>
-          <IconButton
-            size="small"
-            onClick={() => handleOpenDialog(params.row)}
-            color="primary"
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => handleDelete(params.row.id, params.row.email)}
-            color="error"
-            disabled={params.row.email === 'chavindun@gmail.com'}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ]
-
   return (
     <ProtectedRoute requireSuperAdmin>
       <Layout>
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1">
+        <div>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
               User Management
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+            </h1>
+            <button
               onClick={() => handleOpenDialog()}
+              className="btn-primary flex items-center"
             >
+              <PlusIcon className="h-5 w-5 mr-2" />
               Add User
-            </Button>
-          </Box>
+            </button>
+          </div>
 
-          <Alert severity="info" sx={{ mb: 3 }}>
-            Only registered users can sign in via Google OAuth. Users must use the same email address they were registered with.
-          </Alert>
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  Only registered users can sign in via Google OAuth. Users must use the same email address they were registered with.
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent>
-              <DataGrid
-                rows={users}
-                columns={columns}
-                loading={loading}
-                autoHeight
-                disableRowSelectionOnClick
-                initialState={{
-                  pagination: {
-                    paginationModel: { page: 0, pageSize: 10 },
-                  },
-                }}
-                pageSizeOptions={[10, 25, 50]}
-              />
-            </CardContent>
-          </Card>
+          <div className="card p-6">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
+                <p className="mt-2 text-gray-500">Loading users...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                          No users found.
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {user.email}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              user.role === 'superadmin' 
+                                ? 'bg-purple-100 text-purple-800' 
+                                : 'bg-primary-100 text-primary-800'
+                            }`}>
+                              {user.role === 'superadmin' ? (
+                                <ShieldCheckIcon className="h-3 w-3 mr-1" />
+                              ) : (
+                                <UserIcon className="h-3 w-3 mr-1" />
+                              )}
+                              {user.role === 'superadmin' ? 'Super Admin' : 'Admin'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleOpenDialog(user)}
+                                className="text-primary-600 hover:text-primary-900"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(user.id, user.email)}
+                                disabled={user.email === 'chavindun@gmail.com'}
+                                className={`${user.email === 'chavindun@gmail.com' ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900'}`}
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-          <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-            <DialogTitle>
-              {editingUser ? 'Edit User' : 'Add User'}
-            </DialogTitle>
-            <DialogContent>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Email"
-                type="email"
-                fullWidth
-                variant="outlined"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                sx={{ mb: 2 }}
-                disabled={editingUser?.email === 'chavindun@gmail.com'}
-              />
-              <TextField
-                margin="dense"
-                label="Name"
-                fullWidth
-                variant="outlined"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                sx={{ mb: 2 }}
-              />
-              <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  value={formData.role}
-                  label="Role"
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'superadmin' })}
-                  disabled={editingUser?.email === 'chavindun@gmail.com'}
-                >
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="superadmin">Super Admin</MenuItem>
-                </Select>
-              </FormControl>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button onClick={handleSave} variant="contained">
-                {editingUser ? 'Update' : 'Add'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+          {/* Dialog */}
+          {openDialog && (
+            <div className="fixed inset-0 z-50 overflow-y-auto">
+              <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={handleCloseDialog}></div>
+                
+                <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                  <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                      {editingUser ? 'Edit User' : 'Add User'}
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="input-field"
+                          placeholder="Enter email address"
+                          disabled={editingUser?.email === 'chavindun@gmail.com'}
+                          autoFocus
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="input-field"
+                          placeholder="Enter full name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                          Role
+                        </label>
+                        <select
+                          id="role"
+                          value={formData.role}
+                          onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'superadmin' })}
+                          className="input-field"
+                          disabled={editingUser?.email === 'chavindun@gmail.com'}
+                        >
+                          <option value="admin">Admin</option>
+                          <option value="superadmin">Super Admin</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button
+                      onClick={handleSave}
+                      className="btn-primary w-full sm:w-auto sm:ml-3"
+                    >
+                      {editingUser ? 'Update' : 'Add'}
+                    </button>
+                    <button
+                      onClick={handleCloseDialog}
+                      className="mt-3 w-full sm:mt-0 sm:w-auto bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={6000}
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-          >
-            <Alert
-              onClose={() => setSnackbar({ ...snackbar, open: false })}
-              severity={snackbar.severity}
-              sx={{ width: '100%' }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
+          {/* Snackbar */}
+          {snackbar.open && (
+            <div className="fixed bottom-4 right-4 z-50">
+              <div className={`p-4 rounded-md shadow-lg ${
+                snackbar.severity === 'success' 
+                  ? 'bg-green-50 border border-green-200 text-green-800' 
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{snackbar.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setSnackbar({ ...snackbar, open: false })}
+                    className="ml-4 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </Layout>
     </ProtectedRoute>
   )

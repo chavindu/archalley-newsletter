@@ -1,18 +1,7 @@
 import { useState } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
-import { 
-  Container, 
-  Box, 
-  Paper, 
-  Typography, 
-  TextField, 
-  Button, 
-  Alert,
-  CircularProgress,
-  Grid
-} from '@mui/material'
-import { Email as EmailIcon, Send as SendIcon } from '@mui/icons-material'
+import { EnvelopeIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -66,147 +55,141 @@ export default function Home() {
     }
   }
 
-
   return (
-    <Container maxWidth="md">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 4,
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            width: '100%',
-            textAlign: 'center',
-            borderRadius: 2,
-          }}
-        >
-          <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h3" 
-              component="h1" 
-              gutterBottom 
-              sx={{ 
-                color: '#FFA500',
-                fontWeight: 'bold',
-                mb: 2
-              }}
-            >
-              Archalley Newsletter
-            </Typography>
-            <Typography 
-              variant="h5" 
-              component="h2" 
-              gutterBottom
-              sx={{ 
-                color: '#666',
-                mb: 3
-              }}
-            >
-              Stay Updated with the Latest News
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: '#888',
-                maxWidth: '600px',
-                mx: 'auto',
-                lineHeight: 1.6
-              }}
-            >
-              Subscribe to our newsletter and never miss important updates, 
-              announcements, and exclusive content from Archalley.
-            </Typography>
-          </Box>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
+      <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/images/archalley-logo-ylw.svg" 
+              alt="Archalley Logo" 
+              className="h-16 w-auto"
+            />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">
+            Archalley Newsletter
+          </h3>
+          <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
+            Stay updated with the latest architectural insights, design trends, and industry news. 
+            Join thousands of architects, designers, and enthusiasts who trust Archalley for their daily dose of inspiration.
+          </p>
+        </div>
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: '500px', mx: 'auto' }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
+        {/* Newsletter Signup */}
+        <div className="card p-8 max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <EnvelopeIcon className="h-12 w-12 text-primary-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Subscribe to Our Newsletter
+            </h2>
+            <p className="text-gray-600">
+              Get the latest architectural content delivered directly to your inbox
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <input
                   type="email"
-                  label="Email Address"
+                  id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="input-field pl-10"
                   placeholder="Enter your email address"
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: <EmailIcon sx={{ mr: 1, color: '#FFA500' }} />,
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FFA500',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FFA500',
-                    },
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  fullWidth
                   disabled={loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
-                  sx={{
-                    backgroundColor: '#FFA500',
-                    '&:hover': {
-                      backgroundColor: '#e69500',
-                    },
-                    py: 1.5,
-                    fontSize: '1.1rem',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {loading ? 'Subscribing...' : 'Subscribe Now'}
-                </Button>
-              </Grid>
-            </Grid>
+                />
+                <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
 
-            {message && (
-              <Box sx={{ mt: 3 }}>
-                <Alert 
-                  severity={message.type} 
-                  sx={{ 
-                    textAlign: 'left',
-                    '& .MuiAlert-icon': {
-                      color: message.type === 'success' ? '#4caf50' : '#f44336'
-                    }
-                  }}
-                >
-                  {message.text}
-                </Alert>
-              </Box>
-            )}
-          </Box>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full flex items-center justify-center py-3 px-4 text-base font-medium"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Subscribing...
+                </>
+              ) : (
+                <>
+                  <PaperAirplaneIcon className="h-5 w-5 mr-2" />
+                  Subscribe Now
+                </>
+              )}
+            </button>
+          </form>
 
-          <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #eee' }}>
-            <Typography variant="body2" color="text.secondary">
+          {message && (
+            <div className={`mt-6 p-4 rounded-md ${
+              message.type === 'success' 
+                ? 'bg-green-50 border border-green-200 text-green-800' 
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}>
+              {message.text}
+            </div>
+          )}
+
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-500 text-center">
               By subscribing, you agree to receive our newsletter. You can unsubscribe at any time.
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+            </p>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="text-center">
+            <div className="bg-primary-100 rounded-full p-3 w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+              <EnvelopeIcon className="h-6 w-6 text-primary-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Weekly Updates</h3>
+            <p className="text-gray-600">Get curated architectural content delivered every week</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="bg-primary-100 rounded-full p-3 w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+              <svg className="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Latest Trends</h3>
+            <p className="text-gray-600">Stay ahead with the newest design trends and technologies</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="bg-primary-100 rounded-full p-3 w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+              <svg className="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Expert Insights</h3>
+            <p className="text-gray-600">Learn from industry professionals and thought leaders</p>
+          </div>
+        </div>
+
+       {/* Footer */}
+<div className="mt-16 text-center text-gray-500">
+  <p>© {new Date().getFullYear()} Archalley. All rights reserved.</p>
+</div>
+
+      </div>
+    </div>
   )
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession(context)
 
-  // If user is logged in, redirect to dashboard
   if (session) {
     return {
       redirect: {
@@ -216,7 +199,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
   }
 
-  // Allow public access to homepage for subscription
   return {
     props: {},
   }

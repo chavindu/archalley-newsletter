@@ -2,26 +2,14 @@ import { useState, useEffect } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Chip,
-  Alert,
-  Snackbar,
-} from '@mui/material'
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Send as SendIcon,
-  Schedule as ScheduleIcon,
-  Drafts as DraftsIcon,
-  Refresh as ResendIcon,
-} from '@mui/icons-material'
-import { DataGrid, GridColDef } from '@mui/x-data-grid'
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  PaperAirplaneIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline'
 import { useRouter } from 'next/router'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -108,173 +96,179 @@ export default function Newsletters() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'default'
+        return 'bg-gray-100 text-gray-800'
       case 'scheduled':
-        return 'warning'
+        return 'bg-yellow-100 text-yellow-800'
       case 'sent':
-        return 'success'
+        return 'bg-green-100 text-green-800'
       default:
-        return 'default'
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'draft':
-        return <DraftsIcon />
+        return <DocumentTextIcon className="h-4 w-4" />
       case 'scheduled':
-        return <ScheduleIcon />
+        return <ClockIcon className="h-4 w-4" />
       case 'sent':
-        return <SendIcon />
+        return <PaperAirplaneIcon className="h-4 w-4" />
       default:
-        return <DraftsIcon />
+        return <DocumentTextIcon className="h-4 w-4" />
     }
   }
-
-  const columns: GridColDef[] = [
-    {
-      field: 'title',
-      headerName: 'Title',
-      flex: 1,
-      minWidth: 250,
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          icon={getStatusIcon(params.value)}
-          label={params.value.charAt(0).toUpperCase() + params.value.slice(1)}
-          size="small"
-          color={getStatusColor(params.value)}
-        />
-      ),
-    },
-    {
-      field: 'selected_posts',
-      headerName: 'Posts',
-      width: 80,
-      renderCell: (params) => (
-        <Chip
-          label={params.value?.length || 0}
-          size="small"
-          variant="outlined"
-        />
-      ),
-    },
-    {
-      field: 'email_list_ids',
-      headerName: 'Lists',
-      width: 80,
-      renderCell: (params) => (
-        <Chip
-          label={params.value?.length || 0}
-          size="small"
-          variant="outlined"
-        />
-      ),
-    },
-    {
-      field: 'created_at',
-      headerName: 'Created',
-      width: 120,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: 'sent_at',
-      headerName: 'Sent',
-      width: 120,
-      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString() : '-',
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 160,
-      sortable: false,
-      renderCell: (params) => (
-        <Box>
-          <IconButton
-            size="small"
-            onClick={() => router.push(`/newsletters/${params.row.id}`)}
-            color="primary"
-            title="Edit"
-          >
-            <EditIcon />
-          </IconButton>
-          {params.row.status === 'sent' && (
-            <IconButton
-              size="small"
-              onClick={() => handleResend(params.row.id)}
-              color="secondary"
-              title="Resend"
-            >
-              <ResendIcon />
-            </IconButton>
-          )}
-          <IconButton
-            size="small"
-            onClick={() => handleDelete(params.row.id)}
-            color="error"
-            disabled={params.row.status === 'sent'}
-            title="Delete"
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ]
 
   return (
     <ProtectedRoute>
       <Layout>
-        <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1">
+        <div>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">
               Newsletters
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
+            </h1>
+            <button
               onClick={() => router.push('/newsletters/new')}
+              className="btn-primary flex items-center"
             >
+              <PlusIcon className="h-5 w-5 mr-2" />
               Create Newsletter
-            </Button>
-          </Box>
+            </button>
+          </div>
 
-          <Card>
-            <CardContent>
-              <DataGrid
-                rows={newsletters}
-                columns={columns}
-                loading={loading}
-                autoHeight
-                disableRowSelectionOnClick
-                initialState={{
-                  pagination: {
-                    paginationModel: { page: 0, pageSize: 10 },
-                  },
-                }}
-                pageSizeOptions={[10, 25, 50]}
-              />
-            </CardContent>
-          </Card>
+          <div className="card p-6">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
+                <p className="mt-2 text-gray-500">Loading newsletters...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Posts
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Lists
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Sent
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {newsletters.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                          No newsletters found. Create your first newsletter to get started.
+                        </td>
+                      </tr>
+                    ) : (
+                      newsletters.map((newsletter) => (
+                        <tr key={newsletter.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {newsletter.title}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(newsletter.status)}`}>
+                              {getStatusIcon(newsletter.status)}
+                              <span className="ml-1 capitalize">{newsletter.status}</span>
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {newsletter.selected_posts?.length || 0}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {newsletter.email_list_ids?.length || 0}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(newsletter.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {newsletter.sent_at ? new Date(newsletter.sent_at).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => router.push(`/newsletters/${newsletter.id}`)}
+                                className="text-primary-600 hover:text-primary-900"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                              {newsletter.status === 'sent' && (
+                                <button
+                                  onClick={() => handleResend(newsletter.id)}
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="Resend"
+                                >
+                                  <ArrowPathIcon className="h-4 w-4" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDelete(newsletter.id)}
+                                disabled={newsletter.status === 'sent'}
+                                className={`${newsletter.status === 'sent' ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-900'}`}
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={6000}
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-          >
-            <Alert
-              onClose={() => setSnackbar({ ...snackbar, open: false })}
-              severity={snackbar.severity}
-              sx={{ width: '100%' }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
+          {/* Snackbar */}
+          {snackbar.open && (
+            <div className="fixed bottom-4 right-4 z-50">
+              <div className={`p-4 rounded-md shadow-lg ${
+                snackbar.severity === 'success' 
+                  ? 'bg-green-50 border border-green-200 text-green-800' 
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{snackbar.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setSnackbar({ ...snackbar, open: false })}
+                    className="ml-4 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </Layout>
     </ProtectedRoute>
   )

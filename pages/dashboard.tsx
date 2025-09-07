@@ -2,19 +2,11 @@ import { useState, useEffect } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Paper,
-} from '@mui/material'
-import {
-  Email as EmailIcon,
-  Campaign as CampaignIcon,
-  People as PeopleIcon,
-  TrendingUp as TrendingUpIcon,
-} from '@mui/icons-material'
+  EnvelopeIcon,
+  MegaphoneIcon,
+  UsersIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase } from '@/lib/supabase'
@@ -59,94 +51,74 @@ export default function Dashboard() {
   }
 
   const StatCard = ({ title, value, icon, color }: { title: string; value: number; icon: React.ReactNode; color: string }) => (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ color, mr: 2 }}>
-            {icon}
-          </Box>
-          <Box>
-            <Typography variant="h4" component="div">
-              {value}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {title}
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+    <div className="card p-6">
+      <div className="flex items-center">
+        <div className={`text-${color}-500 mr-4`}>
+          {icon}
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-gray-900">
+            {value}
+          </div>
+          <div className="text-sm text-gray-500">
+            {title}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 
   return (
     <ProtectedRoute>
       <Layout>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary" gutterBottom>
+          </h1>
+          <p className="text-gray-600 mb-8">
             Welcome to Archalley Newsletter Management System
-          </Typography>
+          </p>
 
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Email Lists"
-                value={stats.totalEmailLists}
-                icon={<EmailIcon fontSize="large" />}
-                color="#FFA500"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Active Subscribers"
-                value={stats.totalSubscribers}
-                icon={<PeopleIcon fontSize="large" />}
-                color="#4caf50"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Total Newsletters"
-                value={stats.totalNewsletters}
-                icon={<CampaignIcon fontSize="large" />}
-                color="#2196f3"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Sent Newsletters"
-                value={stats.sentNewsletters}
-                icon={<TrendingUpIcon fontSize="large" />}
-                color="#ff9800"
-              />
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <StatCard
+              title="Email Lists"
+              value={stats.totalEmailLists}
+              icon={<EnvelopeIcon className="h-8 w-8" />}
+              color="primary"
+            />
+            <StatCard
+              title="Active Subscribers"
+              value={stats.totalSubscribers}
+              icon={<UsersIcon className="h-8 w-8" />}
+              color="green"
+            />
+            <StatCard
+              title="Total Newsletters"
+              value={stats.totalNewsletters}
+              icon={<MegaphoneIcon className="h-8 w-8" />}
+              color="blue"
+            />
+            <StatCard
+              title="Sent Newsletters"
+              value={stats.sentNewsletters}
+              icon={<ChartBarIcon className="h-8 w-8" />}
+              color="orange"
+            />
+          </div>
 
-          <Box sx={{ mt: 4 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Quick Start Guide
-              </Typography>
-              <Typography variant="body1" paragraph>
-                1. Create email lists to organize your subscribers
-              </Typography>
-              <Typography variant="body1" paragraph>
-                2. Import subscribers via CSV or add them manually
-              </Typography>
-              <Typography variant="body1" paragraph>
-                3. Create newsletters by selecting blog posts from archalley.com
-              </Typography>
-              <Typography variant="body1" paragraph>
-                4. Send newsletters to your selected email lists
-              </Typography>
-              <Typography variant="body1">
-                5. Track analytics to see how your newsletters perform
-              </Typography>
-            </Paper>
-          </Box>
-        </Box>
+          <div className="card p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Quick Start Guide
+            </h2>
+            <div className="space-y-3 text-gray-700">
+              <p>1. Create email lists to organize your subscribers</p>
+              <p>2. Import subscribers via CSV or add them manually</p>
+              <p>3. Create newsletters by selecting blog posts from archalley.com</p>
+              <p>4. Send newsletters to your selected email lists</p>
+              <p>5. Track analytics to see how your newsletters perform</p>
+            </div>
+          </div>
+        </div>
       </Layout>
     </ProtectedRoute>
   )
