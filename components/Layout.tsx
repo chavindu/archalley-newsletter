@@ -179,6 +179,23 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </main>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 py-4">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center text-sm text-gray-500">
+              Designed & Developed by{' '}
+              <a
+                href="https://bitlab.lk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-500 hover:text-primary-600 transition-colors"
+              >
+                BitLab (Pvt) Ltd.
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   )
