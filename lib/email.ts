@@ -115,7 +115,7 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
         .logo-img {
             max-width: 200px;
             height: auto;
-            margin-bottom: 10px;
+            margin: 0 auto 10px auto;
             display: block;
         }
         
@@ -274,6 +274,8 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
             }
             .logo-img {
                 max-width: 150px;
+                margin: 0 auto 10px auto;
+                display: block;
             }
         }
         
@@ -328,7 +330,7 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
 <body>
     <div class="container">
         <div class="header">
-            <img src="${process.env.NEXTAUTH_URL}/images/archalley-logo.webp" alt="Archalley" class="logo-img" />
+            <img src="${process.env.NEXTAUTH_URL}/images/archalley-logo.png" alt="Archalley" class="logo-img" />
             <p class="tagline">Architecture & Design Newsletter</p>
         </div>
         
@@ -519,7 +521,8 @@ export function generateWelcomeEmailHTML(email: string): string {
         .logo-img {
             max-width: 200px;
             height: auto;
-            margin-bottom: 10px;
+            margin: 0 auto 10px auto;
+            display: block;
         }
         .tagline {
             font-size: 16px;
@@ -571,7 +574,7 @@ export function generateWelcomeEmailHTML(email: string): string {
 <body>
     <div class="container">
         <div class="header">
-            <img src="${process.env.NEXTAUTH_URL}/images/archalley-logo.webp" alt="Archalley" class="logo-img" />
+            <img src="${process.env.NEXTAUTH_URL}/images/archalley-logo.png" alt="Archalley" class="logo-img" />
             <div class="tagline">Architecture & Design Newsletter</div>
         </div>
         
@@ -647,7 +650,8 @@ export function generateUnsubscribeEmailHTML(email: string, unsubscribeToken?: s
         .logo-img {
             max-width: 200px;
             height: auto;
-            margin-bottom: 10px;
+            margin: 0 auto 10px auto;
+            display: block;
         }
         .tagline {
             font-size: 16px;
@@ -703,7 +707,7 @@ export function generateUnsubscribeEmailHTML(email: string, unsubscribeToken?: s
 <body>
     <div class="container">
         <div class="header">
-            <img src="${process.env.NEXTAUTH_URL}/images/archalley-logo.webp" alt="Archalley" class="logo-img" />
+            <img src="${process.env.NEXTAUTH_URL}/images/archalley-logo.png" alt="Archalley" class="logo-img" />
             <div class="tagline">Architecture & Design Newsletter</div>
         </div>
         
