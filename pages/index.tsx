@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { GetServerSideProps } from 'next'
+import Head from 'next/head'
 import { EnvelopeIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline'
 
 export default function Home() {
@@ -55,7 +56,79 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
+    <>
+      <Head>
+        {/* Primary Meta Tags */}
+        <title>Archalley Newsletter - Latest Architectural Insights & Design Trends</title>
+        <meta name="title" content="Archalley Newsletter - Latest Architectural Insights & Design Trends" />
+        <meta name="description" content="Stay updated with the latest architectural insights, design trends, and industry news. Join thousands of architects, designers, and enthusiasts who trust Archalley for their daily dose of inspiration." />
+        <meta name="keywords" content="architecture newsletter, architectural insights, design trends, architecture news, architectural inspiration, architects, designers, architectural content, building design, architectural updates" />
+        <meta name="author" content="Archalley" />
+        <meta name="robots" content="index, follow" />
+        <meta name="language" content="English" />
+        <meta name="revisit-after" content="7 days" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://archalley.com/" />
+        <meta property="og:title" content="Archalley Newsletter - Latest Architectural Insights & Design Trends" />
+        <meta property="og:description" content="Stay updated with the latest architectural insights, design trends, and industry news. Join thousands of architects, designers, and enthusiasts who trust Archalley for their daily dose of inspiration." />
+        <meta property="og:image" content="https://archalley.com/images/archalley-logo.png" />
+        <meta property="og:site_name" content="Archalley" />
+        <meta property="og:locale" content="en_US" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://archalley.com/" />
+        <meta property="twitter:title" content="Archalley Newsletter - Latest Architectural Insights & Design Trends" />
+        <meta property="twitter:description" content="Stay updated with the latest architectural insights, design trends, and industry news. Join thousands of architects, designers, and enthusiasts who trust Archalley for their daily dose of inspiration." />
+        <meta property="twitter:image" content="https://archalley.com/images/archalley-logo.png" />
+        
+        {/* Additional SEO Meta Tags */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="theme-color" content="#3B82F6" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://archalley.com/" />
+        
+        {/* Favicon */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png" />
+        <link rel="shortcut icon" href="/images/favicon.png" />
+        <link rel="apple-touch-icon" href="/images/favicon.png" />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Archalley",
+              "url": "https://archalley.com",
+              "logo": "https://archalley.com/images/archalley-logo.png",
+              "description": "Stay updated with the latest architectural insights, design trends, and industry news. Join thousands of architects, designers, and enthusiasts who trust Archalley for their daily dose of inspiration.",
+              "sameAs": [
+                "https://www.facebook.com/archalley",
+                "https://www.instagram.com/archalley",
+                "https://www.linkedin.com/company/archalley",
+                "https://twitter.com/archalley",
+                "https://www.youtube.com/archalley",
+                "https://www.pinterest.com/archalley",
+                "https://www.tiktok.com/@archalley"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer service",
+                "email": "newsletter@archalley.com"
+              }
+            })
+          }}
+        />
+      </Head>
+      
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
       <div className="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
@@ -183,6 +256,7 @@ export default function Home() {
 
       </div>
     </div>
+    </>
   )
 }
 
