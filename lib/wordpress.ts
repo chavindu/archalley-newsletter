@@ -107,10 +107,16 @@ export function stripHtmlTags(html: string): string {
 
 // Convert WordPressPost to EmailPost format
 export function convertWordPressPostToEmailPost(wpPost: WordPressPost): EmailPost {
+  const strippedExcerpt = stripHtmlTags(wpPost.excerpt.rendered)
+  const words = strippedExcerpt.split(' ')
+  const limitedExcerpt = words.length > 35 
+    ? words.slice(0, 35).join(' ') + '...'
+    : strippedExcerpt
+  
   return {
     id: wpPost.id,
     title: stripHtmlTags(wpPost.title.rendered),
-    excerpt: stripHtmlTags(wpPost.excerpt.rendered),
+    excerpt: limitedExcerpt,
     link: wpPost.link,
     featured_image: getFeaturedImage(wpPost),
     categories: getCategoryNames(wpPost),

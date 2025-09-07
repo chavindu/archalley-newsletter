@@ -15,8 +15,12 @@ export interface EmailSyncResult {
 }
 
 const WORDPRESS_EMAIL_API_URL = 'https://archalley.com/wp-json/bitlab-custom-api/v1/user-emails'
-const WORDPRESS_EMAIL_SECRET = 'OpSAn1GqqhJJw5hpBM5NO1j5mJjlWykr'
+const WORDPRESS_EMAIL_SECRET = process.env.WORDPRESS_EMAIL_SECRET
 const TARGET_EMAIL_LIST_ID = 'b163441c-e44d-4461-b600-ebe79e39644f'
+
+if (!WORDPRESS_EMAIL_SECRET) {
+  throw new Error('WORDPRESS_EMAIL_SECRET environment variable is not set')
+}
 
 /**
  * Fetch emails from WordPress custom API
