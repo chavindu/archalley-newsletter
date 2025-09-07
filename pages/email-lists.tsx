@@ -169,6 +169,8 @@ export default function EmailLists() {
           label={params.row.subscribers?.[0]?.count || 0}
           size="small"
           color="primary"
+          onClick={() => router.push(`/email-lists/${params.row.id}/subscribers`)}
+          sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'primary.dark' } }}
         />
       ),
     },
@@ -229,21 +231,12 @@ export default function EmailLists() {
                 loading={loading}
                 autoHeight
                 disableRowSelectionOnClick
-                onRowClick={(params) => router.push(`/email-lists/${params.row.id}/subscribers`)}
                 initialState={{
                   pagination: {
                     paginationModel: { page: 0, pageSize: 10 },
                   },
                 }}
                 pageSizeOptions={[10, 25, 50]}
-                sx={{
-                  '& .MuiDataGrid-row': {
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 165, 0, 0.04)',
-                    },
-                  },
-                }}
               />
             </CardContent>
           </Card>
