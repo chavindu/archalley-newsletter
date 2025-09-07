@@ -109,8 +109,8 @@ export function stripHtmlTags(html: string): string {
 export function convertWordPressPostToEmailPost(wpPost: WordPressPost): EmailPost {
   const strippedExcerpt = stripHtmlTags(wpPost.excerpt.rendered)
   const words = strippedExcerpt.split(' ')
-  const limitedExcerpt = words.length > 35 
-    ? words.slice(0, 35).join(' ') + '...'
+  const limitedExcerpt = words.length > 20 
+    ? words.slice(0, 20).join(' ') + '...'
     : strippedExcerpt
   
   return {

@@ -62,13 +62,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const totalPages = Math.ceil((count || 0) / limitNum)
 
-    // Apply 35-word limit to excerpts for consistency
+    // Apply 20-word limit to excerpts for consistency
     const postsWithLimitedExcerpts = posts.map((post: any) => ({
       ...post,
       excerpt: post.excerpt ? (() => {
         const words = post.excerpt.split(' ')
-        return words.length > 35 
-          ? words.slice(0, 35).join(' ') + '...'
+        return words.length > 20 
+          ? words.slice(0, 20).join(' ') + '...'
           : post.excerpt
       })() : null
     }))

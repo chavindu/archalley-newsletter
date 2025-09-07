@@ -157,14 +157,14 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
             width: 40%;
             background: #f8f9fa;
             line-height: 0;
+            font-size: 0;
         }
         
         .post-image {
             width: 100%;
-            height: auto;
-            max-height: 200px;
+            height: 200px;
             display: block;
-            object-fit: contain;
+            object-fit: cover;
             object-position: center;
         }
         
@@ -272,9 +272,8 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
                 display: block !important;
             }
             .post-image {
-                height: auto;
-                max-height: 150px;
-                object-fit: contain;
+                height: 150px;
+                object-fit: cover;
                 object-position: center;
             }
             .post-title {
@@ -330,9 +329,8 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
         /* Gmail image fixes */
         .post-image[class="post-image"] {
             width: 100% !important;
-            height: auto !important;
-            max-height: 200px !important;
-            object-fit: contain !important;
+            height: 200px !important;
+            object-fit: cover !important;
             object-position: center !important;
         }
     </style>

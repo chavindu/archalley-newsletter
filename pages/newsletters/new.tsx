@@ -75,11 +75,11 @@ export default function NewNewsletter() {
       const data = await response.json()
       // Convert stored posts to EmailPost format with word limit applied
       const emailPosts = data.posts.map((post: any) => {
-        // Apply 35-word limit to excerpt
+        // Apply 20-word limit to excerpt
         const excerpt = post.excerpt || ''
         const words = excerpt.split(' ')
-        const limitedExcerpt = words.length > 35 
-          ? words.slice(0, 35).join(' ') + '...'
+        const limitedExcerpt = words.length > 20 
+          ? words.slice(0, 20).join(' ') + '...'
           : excerpt
         
         return {
