@@ -6,7 +6,8 @@ import { authOptions } from '../auth/[...nextauth]'
 import { StoredWordPressPost, WordPressPostSyncResult } from '@/lib/wordpress-posts'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  // Accept both GET (for Vercel cron jobs) and POST (for manual calls)
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' })
   }
 

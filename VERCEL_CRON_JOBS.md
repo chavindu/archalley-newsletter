@@ -68,9 +68,11 @@ CRON_SECRET=your_random_cron_secret_key_at_least_16_characters
 
 ## Manual Testing
 
-You can test the cron jobs locally by making POST requests to:
-- `http://localhost:3000/api/wordpress/sync-posts`
-- `http://localhost:3000/api/wordpress/sync-emails`
+You can test the cron jobs locally by making requests to:
+- `GET/POST http://localhost:3000/api/wordpress/sync-posts`
+- `GET/POST http://localhost:3000/api/wordpress/sync-emails`
+
+**Note**: Vercel cron jobs use GET requests, while manual testing can use either GET or POST.
 
 ## Time Zone Conversion
 

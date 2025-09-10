@@ -48,7 +48,7 @@ CRON_SECRET=your_random_cron_secret_key_at_least_16_characters
 #### Manual Testing:
 You can test the cron job locally by visiting:
 ```
-http://localhost:3000/api/wordpress/sync-emails
+GET/POST http://localhost:3000/api/wordpress/sync-emails
 ```
 
 ### Alternative: Node.js Cron Job (For Development)
