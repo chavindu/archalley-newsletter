@@ -10,6 +10,7 @@ import {
   Cog6ToothIcon,
   NewspaperIcon,
   AtSymbolIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -33,13 +34,17 @@ export default function Layout({ children }: LayoutProps) {
     { text: 'Dashboard', icon: HomeIcon, href: '/dashboard' },
     { text: 'Email Lists', icon: EnvelopeIcon, href: '/email-lists' },
     { text: 'Newsletters', icon: MegaphoneIcon, href: '/newsletters' },
-    { text: 'WordPress Posts', icon: NewspaperIcon, href: '/wordpress-posts' },
-    { text: 'WordPress Emails', icon: AtSymbolIcon, href: '/wordpress-emails' },
     { text: 'Analytics', icon: ChartBarIcon, href: '/analytics' },
   ]
 
+  // Add superadmin-only menu items
   if (session?.user.role === 'superadmin') {
-    menuItems.push({ text: 'Users', icon: UsersIcon, href: '/users' })
+    menuItems.push(
+      { text: 'WordPress Posts', icon: NewspaperIcon, href: '/wordpress-posts' },
+      { text: 'WordPress Emails', icon: AtSymbolIcon, href: '/wordpress-emails' },
+      { text: 'Test Email', icon: WrenchScrewdriverIcon, href: '/test-email' },
+      { text: 'Users', icon: UsersIcon, href: '/users' }
+    )
   }
 
   const getPageTitle = () => {
@@ -50,12 +55,14 @@ export default function Layout({ children }: LayoutProps) {
         return 'Email Lists'
       case '/newsletters':
         return 'Newsletters'
+      case '/analytics':
+        return 'Analytics'
       case '/wordpress-posts':
         return 'WordPress Posts'
       case '/wordpress-emails':
         return 'WordPress Emails'
-      case '/analytics':
-        return 'Analytics'
+      case '/test-email':
+        return 'Test Email'
       case '/users':
         return 'Users'
       default:
