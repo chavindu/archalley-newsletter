@@ -131,7 +131,7 @@ export default function WordPressPosts() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireSuperAdmin>
       <Layout>
         <div>
           <div className="flex items-center justify-between mb-8">

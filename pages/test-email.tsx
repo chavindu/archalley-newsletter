@@ -38,7 +38,7 @@ export default function TestEmail() {
   }
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requireSuperAdmin>
       <Layout>
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
