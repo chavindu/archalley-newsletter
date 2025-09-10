@@ -31,7 +31,27 @@ This system automatically fetches email addresses from archalley.com every 24 ho
 
 ## Automated Sync Setup
 
-### Option 1: Node.js Cron Job (Recommended)
+### Vercel Cron Jobs (Recommended for Production)
+
+The WordPress emails sync is configured to run automatically on Vercel using cron jobs:
+
+1. **Schedule**: Daily at 2:00 AM Sri Lankan Time (8:30 PM UTC)
+2. **Configuration**: Defined in `vercel.json`
+3. **Security**: Protected with `CRON_SECRET` environment variable
+4. **Endpoint**: `/api/wordpress/sync-emails`
+
+#### Environment Variables Required:
+```bash
+CRON_SECRET=your_random_cron_secret_key_at_least_16_characters
+```
+
+#### Manual Testing:
+You can test the cron job locally by visiting:
+```
+http://localhost:3000/api/wordpress/sync-emails
+```
+
+### Alternative: Node.js Cron Job (For Development)
 
 1. Install dependencies:
 ```bash
@@ -46,13 +66,13 @@ npm run start-emails
 
 3. To run as a Windows service, use a tool like `pm2` or `node-windows`.
 
-### Option 2: Windows Task Scheduler
+### Alternative: Windows Task Scheduler
 
 1. Create a new task in Windows Task Scheduler
 2. Set trigger to "Daily" at midnight
 3. Set action to run `scripts/sync-wordpress-emails.bat`
 
-### Option 3: Linux Cron Job
+### Alternative: Linux Cron Job
 
 1. Add to crontab:
 ```bash

@@ -8,11 +8,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
-  // For automated sync, allow without authentication
-  // For manual sync, require authentication
-  const isAutomatedSync = req.headers['x-automated-sync'] === 'true'
+  // Check if this is a Vercel cron job invocation
+  const authHeader = req.headers.authorization
+  const cronSecret = process.env.CRON_SECRET
   
-  if (!isAutomatedSync) {
+  // For Vercel cron jobs, verify the CRON_SECRET
+  if (authHeader && cronSecret) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ message: 'Unauthorized' })
+    }
+  } else {
+    // For manual sync, require authentication
     const session = await getServerSession(req, res, authOptions)
     if (!session) {
       return res.status(401).json({ message: 'Unauthorized' })

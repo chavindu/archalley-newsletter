@@ -37,7 +37,27 @@ This system automatically fetches WordPress posts from archalley.com every hour 
 
 ## Automated Sync Setup
 
-### Option 1: Node.js Cron Job (Recommended)
+### Vercel Cron Jobs (Recommended for Production)
+
+The WordPress posts sync is configured to run automatically on Vercel using cron jobs:
+
+1. **Schedule**: Daily at 3:00 AM Sri Lankan Time (9:30 PM UTC)
+2. **Configuration**: Defined in `vercel.json`
+3. **Security**: Protected with `CRON_SECRET` environment variable
+4. **Endpoint**: `/api/wordpress/sync-posts`
+
+#### Environment Variables Required:
+```bash
+CRON_SECRET=your_random_cron_secret_key_at_least_16_characters
+```
+
+#### Manual Testing:
+You can test the cron job locally by visiting:
+```
+http://localhost:3000/api/wordpress/sync-posts
+```
+
+### Alternative: Node.js Cron Job (For Development)
 
 1. Install dependencies:
 ```bash
@@ -52,13 +72,13 @@ npm start
 
 3. To run as a Windows service, use a tool like `pm2` or `node-windows`.
 
-### Option 2: Windows Task Scheduler
+### Alternative: Windows Task Scheduler
 
 1. Create a new task in Windows Task Scheduler
 2. Set trigger to "Daily" with "Repeat task every: 1 hour"
 3. Set action to run `scripts/sync-wordpress-posts.bat`
 
-### Option 3: Linux Cron Job
+### Alternative: Linux Cron Job
 
 1. Add to crontab:
 ```bash
