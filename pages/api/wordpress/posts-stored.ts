@@ -18,9 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { 
       page = '1', 
       limit = '20', 
-      status = 'active',
+      status = '',
       featured = 'false',
       category = '',
+      categories = '',
       search = ''
     } = req.query
 
@@ -32,22 +33,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let query = supabase
       .from('wordpress_posts')
       .select('*', { count: 'exact' })
-      .eq('status', status)
       .order('published_date', { ascending: false })
+
+    // Optional status filter (only apply if provided)
+    if ((status as string)?.length) {
+      query = query.eq('status', status)
+    }
 
     // Add featured filter
     if (featured === 'true') {
       query = query.eq('is_featured', true)
     }
 
-    // Add category filter
-    if (category) {
-      query = query.contains('categories', [{ slug: category }])
+    // Add category filter (single or multiple CSV)
+    const categorySlugs = ((categories as string) || '').trim()
+      ? (categories as string).split(',').map(s => s.trim()).filter(Boolean)
+      : ((category as string) ? [(category as string)] : [])
+
+    if (categorySlugs.length >= 1) {
+      // Apply AND logic: post must contain all selected categories
+      for (const slug of categorySlugs) {
+        const json = JSON.stringify([{ slug }])
+        query = query.filter('categories', 'cs', json)
+      }
     }
 
-    // Add search filter
+    // Add search filter (escape commas/parentheses which break OR syntax)
     if (search) {
-      query = query.or(`title.ilike.%${search}%,excerpt.ilike.%${search}%`)
+      const term = (search as string).trim()
+      const escaped = term.replace(/[(),]/g, (m) => `\\${m}`)
+      query = query.or(`title.ilike.%${escaped}%,excerpt.ilike.%${escaped}%`)
     }
 
     // Add pagination

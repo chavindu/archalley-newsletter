@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/react'
 import {
@@ -9,7 +9,6 @@ import {
   EyeIcon,
   StarIcon,
   CalendarIcon,
-  TagIcon,
 } from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -30,6 +29,7 @@ export default function WordPressPosts() {
   const router = useRouter()
   const [posts, setPosts] = useState<StoredWordPressPost[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -41,41 +41,88 @@ export default function WordPressPosts() {
     hasPrev: false
   })
 
-  // Filters
+  // Live search
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('active')
-  const [featured, setFeatured] = useState('false')
-  const [category, setCategory] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
+  // Debounce search input
   useEffect(() => {
-    fetchPosts()
-  }, [pagination.page, status, featured, category, search])
+    const handle = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(handle)
+  }, [search])
 
-  const fetchPosts = async () => {
-    setLoading(true)
+  // Reset and fetch when search changes (handle current page === 1 case)
+  useEffect(() => {
+    setPosts([])
+    if (pagination.page === 1) {
+      fetchPosts(1)
+    } else {
+      setPagination(prev => ({ ...prev, page: 1 }))
+    }
+  }, [debouncedSearch])
+
+  // Fetch when page changes
+  useEffect(() => {
+    fetchPosts(pagination.page)
+  }, [pagination.page])
+
+  const fetchPosts = async (pageToFetch: number) => {
+    const isFirstPage = pageToFetch === 1
+    if (isFirstPage) {
+      setLoading(true)
+    } else {
+      setLoadingMore(true)
+    }
     try {
       const params = new URLSearchParams({
-        page: pagination.page.toString(),
+        page: pageToFetch.toString(),
         limit: pagination.limit.toString(),
-        status,
-        featured,
-        ...(category && { category }),
-        ...(search && { search })
+        status: 'active',
+        ...(debouncedSearch && { search: debouncedSearch })
       })
 
       const response = await fetch(`/api/wordpress/posts-stored?${params}`)
       if (!response.ok) throw new Error('Failed to fetch posts')
 
       const data = await response.json()
-      setPosts(data.posts)
+      setPosts(prev => (isFirstPage ? data.posts : [...prev, ...data.posts]))
       setPagination(data.pagination)
     } catch (error) {
       console.error('Error fetching posts:', error)
       showSnackbar('Error fetching posts', 'error')
     } finally {
-      setLoading(false)
+      if (isFirstPage) {
+        setLoading(false)
+      } else {
+        setLoadingMore(false)
+      }
     }
   }
+
+  // Infinite scroll
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return
+
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      const first = entries[0]
+      if (first.isIntersecting && pagination.hasNext && !loadingMore && !loading) {
+        setPagination(prev => ({ ...prev, page: prev.page + 1 }))
+      }
+    })
+
+    observerRef.current.observe(loadMoreRef.current)
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect()
+    }
+  }, [pagination.hasNext, loadingMore, loading])
 
   const syncPosts = async () => {
     setSyncing(true)
@@ -104,25 +151,14 @@ export default function WordPressPosts() {
     setSnackbar({ open: true, message, severity })
   }
 
-  const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }))
-  }
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setPagination(prev => ({ ...prev, page: 1 }))
-  }
-
-  const clearFilters = () => {
-    setSearch('')
-    setStatus('active')
-    setFeatured('false')
-    setCategory('')
-    setPagination(prev => ({ ...prev, page: 1 }))
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const d = dateString ? new Date(dateString) : null
+    if (!d || isNaN(d.getTime())) return ''
+    return d.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -172,15 +208,10 @@ export default function WordPressPosts() {
             </button>
           </div>
 
-          {/* Filters */}
+          {/* Live Search */}
           <div className="card p-6 mb-6">
-            <div className="flex items-center mb-4">
-              <FunnelIcon className="h-5 w-5 mr-2 text-gray-500" />
-              <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-            </div>
-            
-            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
+            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Search
                 </label>
@@ -195,55 +226,10 @@ export default function WordPressPosts() {
                   />
                 </div>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="input-field"
-                >
-                  <option value="active">Active</option>
-                  <option value="archived">Archived</option>
-                  <option value="deleted">Deleted</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Featured
-                </label>
-                <select
-                  value={featured}
-                  onChange={(e) => setFeatured(e.target.value)}
-                  className="input-field"
-                >
-                  <option value="false">All Posts</option>
-                  <option value="true">Featured Only</option>
-                </select>
-              </div>
-              
-              <div className="flex items-end space-x-2">
-                <button
-                  type="submit"
-                  className="btn-secondary flex-1"
-                >
-                  Search
-                </button>
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="btn-secondary"
-                >
-                  Clear
-                </button>
-              </div>
             </form>
           </div>
 
-          {/* Posts List */}
+          {/* Posts Grid */}
           <div className="card p-6">
             {loading ? (
               <div className="flex justify-center py-8">
@@ -255,107 +241,71 @@ export default function WordPressPosts() {
               </div>
             ) : (
               <>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {posts.map((post) => (
-                    <div key={post.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900 mr-2">
-                              {decodeHtmlEntities(post.title)}
-                            </h3>
-                            {post.is_featured && (
-                              <StarIcon className="h-5 w-5 text-yellow-500" />
-                            )}
-                          </div>
-                          
-                          {post.excerpt && (
-                            <p className="text-gray-600 mb-3 line-clamp-2">
-                              {decodeHtmlEntities(post.excerpt.replace(/<[^>]*>/g, ''))}
-                            </p>
+                    <div key={post.id} className="border rounded-lg overflow-hidden hover:shadow-sm transition-shadow grid grid-rows-[auto_1fr_auto]">
+                      {post.featured_image_url && (
+                        <img
+                          src={post.featured_image_url}
+                          alt={post.featured_image_alt || post.title}
+                          className="w-full h-40 object-cover"
+                        />
+                      )}
+                      <div className="p-4 flex flex-col">
+                        <div className="flex items-start mb-2">
+                          <h3 className="text-base font-semibold text-gray-900 mr-2 line-clamp-2">
+                            {decodeHtmlEntities(post.title)}
+                          </h3>
+                          {post.is_featured && (
+                            <StarIcon className="h-5 w-5 text-yellow-500 flex-shrink-0" />
                           )}
-                          
-                          <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        </div>
+                        {post.excerpt && (
+                          <p className="text-gray-600 mb-3 text-sm line-clamp-3">
+                            {decodeHtmlEntities(post.excerpt.replace(/<[^>]*>/g, ''))}
+                          </p>
+                        )}
+                        <div>
+                          <div className="flex items-center justify-start text-xs text-gray-500 mb-3">
                             <div className="flex items-center">
                               <CalendarIcon className="h-4 w-4 mr-1" />
                               {formatDate(post.published_date)}
                             </div>
-                            
-                            {post.categories.length > 0 && (
-                              <div className="flex items-center">
-                                <TagIcon className="h-4 w-4 mr-1" />
-                                {post.categories.map(cat => decodeHtmlEntities(cat.name)).join(', ')}
-                              </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-700 mb-3">
+                            {Array.isArray(post.categories) && post.categories.length > 0 ? (
+                              post.categories.map(cat => (
+                                <span key={cat.slug || cat.name} className="bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5">
+                                  {decodeHtmlEntities(cat.name)}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5">Uncategorized</span>
                             )}
-                            
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              post.status === 'active' 
-                                ? 'bg-green-100 text-green-800'
-                                : post.status === 'archived'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {post.status}
-                            </span>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center space-x-2 ml-4">
-                          <a
-                            href={post.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-secondary text-sm flex items-center"
-                          >
+                      </div>
+                      <div className="px-4 pb-[15px]">
+                        <a
+                          href={post.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-secondary block w-full text-center text-sm"
+                        >
+                          <span className="inline-flex items-center justify-center">
                             <EyeIcon className="h-4 w-4 mr-1" />
                             View
-                          </a>
-                        </div>
+                          </span>
+                        </a>
                       </div>
-                      
-                      {post.featured_image_url && (
-                        <div className="mt-3">
-                          <img
-                            src={post.featured_image_url}
-                            alt={post.featured_image_alt || post.title}
-                            className="w-full h-48 object-cover rounded"
-                          />
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
 
-                {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-gray-700">
-                      Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                      {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                      {pagination.total} posts
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handlePageChange(pagination.page - 1)}
-                        disabled={!pagination.hasPrev}
-                        className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      
-                      <span className="flex items-center px-3 py-2 text-sm text-gray-700">
-                        Page {pagination.page} of {pagination.totalPages}
-                      </span>
-                      
-                      <button
-                        onClick={() => handlePageChange(pagination.page + 1)}
-                        disabled={!pagination.hasNext}
-                        className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                    </div>
+                <div ref={loadMoreRef} className="h-8"></div>
+                {loadingMore && (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
                   </div>
                 )}
               </>
