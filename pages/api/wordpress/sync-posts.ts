@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { supabase } from '@/lib/supabase'
-import { fetchWordPressPosts, convertWordPressPostsToEmailPosts, WordPressPost } from '@/lib/wordpress'
+import { fetchWordPressPosts, convertWordPressPostsToEmailPosts, WordPressPost, decodeHtmlEntities } from '@/lib/wordpress'
 import { authOptions } from '../auth/[...nextauth]'
 import { StoredWordPressPost, WordPressPostSyncResult } from '@/lib/wordpress-posts'
 
@@ -62,20 +62,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Prepare post data
         const postData = {
           wp_post_id: wpPost.id,
-          title: wpPost.title.rendered,
-          excerpt: wpPost.excerpt.rendered || null,
-          content: wpPost.content.rendered || null,
+          title: decodeHtmlEntities(wpPost.title.rendered),
+          excerpt: wpPost.excerpt.rendered ? decodeHtmlEntities(wpPost.excerpt.rendered) : null,
+          content: wpPost.content.rendered ? decodeHtmlEntities(wpPost.content.rendered) : null,
           link: wpPost.link,
           featured_image_url: featuredImage?.source_url || null,
           featured_image_alt: featuredImage?.alt_text || null,
           categories: categories.map(cat => ({
             id: cat.id,
-            name: cat.name,
+            name: decodeHtmlEntities(cat.name),
             slug: cat.slug
           })),
           tags: tags.map(tag => ({
             id: tag.id,
-            name: tag.name,
+            name: decodeHtmlEntities(tag.name),
             slug: tag.slug
           })),
           author_name: null, // WordPress API doesn't include author name in basic fetch

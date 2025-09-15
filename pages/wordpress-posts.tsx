@@ -14,6 +14,7 @@ import {
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { StoredWordPressPost } from '@/lib/wordpress-posts'
+import { decodeHtmlEntities } from '@/lib/wordpress'
 import { useRouter } from 'next/router'
 
 interface PaginationInfo {
@@ -261,7 +262,7 @@ export default function WordPressPosts() {
                         <div className="flex-1">
                           <div className="flex items-center mb-2">
                             <h3 className="text-lg font-semibold text-gray-900 mr-2">
-                              {post.title}
+                              {decodeHtmlEntities(post.title)}
                             </h3>
                             {post.is_featured && (
                               <StarIcon className="h-5 w-5 text-yellow-500" />
@@ -270,7 +271,7 @@ export default function WordPressPosts() {
                           
                           {post.excerpt && (
                             <p className="text-gray-600 mb-3 line-clamp-2">
-                              {post.excerpt.replace(/<[^>]*>/g, '')}
+                              {decodeHtmlEntities(post.excerpt.replace(/<[^>]*>/g, ''))}
                             </p>
                           )}
                           
@@ -283,7 +284,7 @@ export default function WordPressPosts() {
                             {post.categories.length > 0 && (
                               <div className="flex items-center">
                                 <TagIcon className="h-4 w-4 mr-1" />
-                                {post.categories.map(cat => cat.name).join(', ')}
+                                {post.categories.map(cat => decodeHtmlEntities(cat.name)).join(', ')}
                               </div>
                             )}
                             

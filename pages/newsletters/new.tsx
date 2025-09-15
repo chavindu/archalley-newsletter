@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { GetServerSideProps } from 'next'
 import { getSession, useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
@@ -15,6 +15,7 @@ import {
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase, EmailList } from '@/lib/supabase'
+import { decodeHtmlEntities } from '@/lib/wordpress'
 import { EmailPost } from '@/lib/email'
 
 export default function NewNewsletter() {
@@ -30,6 +31,9 @@ export default function NewNewsletter() {
   const [wpPosts, setWpPosts] = useState<EmailPost[]>([])
   const [selectedPosts, setSelectedPosts] = useState<EmailPost[]>([])
   const [loadingPosts, setLoadingPosts] = useState(false)
+  const [categories, setCategories] = useState<string[]>([])
+  const [activeCategories, setActiveCategories] = useState<string[]>([])
+  const [tempSelectedIds, setTempSelectedIds] = useState<Record<number, boolean>>({})
   
   // Send options
   const [sendOption, setSendOption] = useState<'now' | 'schedule'>('now')
@@ -40,7 +44,8 @@ export default function NewNewsletter() {
     const initializePage = async () => {
       await Promise.all([
         fetchEmailLists(),
-        fetchWordPressPosts() // Automatically load posts when page loads
+        fetchWordPressPosts(),
+        fetchWordPressCategories()
       ])
     }
     
@@ -84,11 +89,11 @@ export default function NewNewsletter() {
         
         return {
           id: post.wp_post_id,
-          title: post.title,
-          excerpt: limitedExcerpt,
+          title: decodeHtmlEntities(post.title),
+          excerpt: decodeHtmlEntities(limitedExcerpt),
           link: post.link,
           featured_image: post.featured_image_url,
-          categories: post.categories.map((cat: any) => cat.name),
+          categories: post.categories.map((cat: any) => decodeHtmlEntities(cat.name)),
           date: post.published_date
         }
       })
@@ -102,6 +107,18 @@ export default function NewNewsletter() {
     }
   }
 
+  const fetchWordPressCategories = async () => {
+    try {
+      const response = await fetch('/api/wordpress/categories')
+      if (!response.ok) throw new Error('Failed to fetch categories')
+      const data = await response.json()
+      const names: string[] = (data.categories || []).map((c: { name: string }) => c.name)
+      setCategories(names.sort((a, b) => a.localeCompare(b)))
+    } catch (error) {
+      console.error('Error fetching WordPress categories:', error)
+    }
+  }
+
   const addPostToNewsletter = (post: EmailPost) => {
     if (!selectedPosts.find(p => p.id === post.id)) {
       setSelectedPosts([...selectedPosts, post])
@@ -111,6 +128,43 @@ export default function NewNewsletter() {
   const removePostFromNewsletter = (postId: number) => {
     setSelectedPosts(selectedPosts.filter(p => p.id !== postId))
   }
+
+  const toggleTempSelect = (postId: number) => {
+    setTempSelectedIds(prev => ({ ...prev, [postId]: !prev[postId] }))
+  }
+
+  const clearTempSelection = () => setTempSelectedIds({})
+
+  const selectAllVisible = (ids: number[]) => {
+    const next: Record<number, boolean> = { ...tempSelectedIds }
+    ids.forEach(id => { next[id] = true })
+    setTempSelectedIds(next)
+  }
+
+  const addTempSelectedToNewsletter = () => {
+    const ids = Object.keys(tempSelectedIds)
+      .filter(id => tempSelectedIds[parseInt(id)])
+      .map(id => parseInt(id))
+    if (ids.length === 0) return
+    const toAdd = wpPosts.filter(p => ids.includes(p.id)).filter(p => !selectedPosts.find(sp => sp.id === p.id))
+    if (toAdd.length === 0) return
+    setSelectedPosts([...selectedPosts, ...toAdd])
+    clearTempSelection()
+  }
+
+  const isPostAlreadyAdded = (postId: number) => selectedPosts.find(p => p.id === postId) !== undefined
+
+  const toggleCategory = (name: string) => {
+    setActiveCategories(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name])
+  }
+
+  const clearCategories = () => setActiveCategories([])
+
+  const filteredPosts = useMemo(() => {
+    if (activeCategories.length === 0) return wpPosts
+    const set = new Set(activeCategories)
+    return wpPosts.filter(p => (p.categories || []).some(c => set.has(c)))
+  }, [wpPosts, activeCategories])
 
   const generateNewsletterContent = () => {
     if (selectedPosts.length === 0) {
@@ -312,6 +366,33 @@ export default function NewNewsletter() {
                   </button>
                 </div>
 
+                {/* Category Filters */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-700">Filter by Categories</h3>
+                    {activeCategories.length > 0 && (
+                      <button onClick={clearCategories} className="text-xs text-gray-600 hover:text-gray-800">Clear</button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={clearCategories}
+                      className={`px-3 py-1 rounded-full text-xs border ${activeCategories.length === 0 ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                    >
+                      All
+                    </button>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => toggleCategory(cat)}
+                        className={`px-3 py-1 rounded-full text-xs border ${activeCategories.includes(cat) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {selectedPosts.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-sm font-medium text-gray-700 mb-3">
@@ -329,13 +410,13 @@ export default function NewNewsletter() {
                               />
                             )}
                             <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-900 mb-1">{post.title}</h4>
+                              <h4 className="text-sm font-medium text-gray-900 mb-1">{decodeHtmlEntities(post.title)}</h4>
                               <p className="text-xs text-gray-500 mb-2">
                                 {new Date(post.date).toLocaleDateString()}
                               </p>
                               {post.excerpt && (
                                 <p className="text-xs text-gray-600 line-clamp-2">
-                                  {post.excerpt.replace(/<[^>]*>/g, '')}
+                                  {decodeHtmlEntities(post.excerpt.replace(/<[^>]*>/g, ''))}
                                 </p>
                               )}
                             </div>
@@ -355,24 +436,59 @@ export default function NewNewsletter() {
                 {/* Available Posts */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    Available Posts ({wpPosts.length})
+                    Available Posts ({filteredPosts.length})
                   </h3>
+
+                  {/* Bulk actions */}
+                  {filteredPosts.length > 0 && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs text-gray-600">
+                        {Object.values(tempSelectedIds).filter(Boolean).length} selected
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => selectAllVisible(filteredPosts.map(p => p.id))}
+                          className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          onClick={clearTempSelection}
+                          className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+                        >
+                          Clear Selection
+                        </button>
+                        <button
+                          onClick={addTempSelectedToNewsletter}
+                          className="text-xs px-2 py-1 border rounded bg-gray-900 text-white"
+                        >
+                          Add Selected
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   
                   {loadingPosts ? (
                     <div className="flex justify-center py-8">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
                     </div>
-                  ) : wpPosts.length === 0 ? (
+                  ) : filteredPosts.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <NewspaperIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                       <p>No posts available</p>
-                      <p className="text-sm">Click "Refresh Posts" to load posts from the database</p>
+                      <p className="text-sm">Try clearing filters or click "Refresh Posts"</p>
                     </div>
                   ) : (
                     <div className="max-h-96 overflow-y-auto space-y-3">
-                      {wpPosts.map((post) => (
+                      {filteredPosts.map((post) => (
                         <div key={post.id} className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50">
-                          <div className="flex-1 flex items-start space-x-3">
+                          <div className="flex items-start space-x-3 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={!!tempSelectedIds[post.id]}
+                              onChange={() => toggleTempSelect(post.id)}
+                              className="mt-1 h-4 w-4 text-primary-600 border-gray-300 rounded"
+                            />
                             {post.featured_image ? (
                               <img
                                 src={post.featured_image}
@@ -385,20 +501,20 @@ export default function NewNewsletter() {
                               </div>
                             )}
                             <div className="flex-1">
-                              <h4 className="text-sm font-medium text-gray-900 mb-1">{post.title}</h4>
+                              <h4 className="text-sm font-medium text-gray-900 mb-1">{decodeHtmlEntities(post.title)}</h4>
                               <p className="text-xs text-gray-500 mb-2">
                                 {new Date(post.date).toLocaleDateString()}
                               </p>
                               {post.excerpt && (
                                 <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                                  {post.excerpt.replace(/<[^>]*>/g, '')}
+                                  {decodeHtmlEntities(post.excerpt.replace(/<[^>]*>/g, ''))}
                                 </p>
                               )}
                               {post.categories.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
                                   {post.categories.slice(0, 3).map((category, index) => (
                                     <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                      {category}
+                                      {decodeHtmlEntities(category)}
                                     </span>
                                   ))}
                                 </div>
@@ -406,11 +522,11 @@ export default function NewNewsletter() {
                             </div>
                           </div>
                           <button
-                            onClick={() => addPostToNewsletter(post)}
-                            disabled={selectedPosts.find(p => p.id === post.id) !== undefined}
+                            onClick={() => isPostAlreadyAdded(post.id) ? removePostFromNewsletter(post.id) : addPostToNewsletter(post)}
+                            disabled={false}
                             className="ml-3 btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                           >
-                            {selectedPosts.find(p => p.id === post.id) ? 'Added' : 'Add'}
+                            {isPostAlreadyAdded(post.id) ? 'Remove' : 'Add'}
                           </button>
                         </div>
                       ))}
