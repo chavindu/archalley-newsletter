@@ -30,11 +30,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log('Starting WordPress posts sync...')
-    
-    // Fetch posts from WordPress API
-    const wpResult = await fetchWordPressPosts(1, 50) // Fetch up to 50 latest posts
-    
-    if (wpResult.posts.length === 0) {
+
+    // Fetch first page to determine total pages
+    const firstPage = 1
+    const perPage = 50
+    const firstResult = await fetchWordPressPosts(firstPage, perPage)
+
+    if (firstResult.posts.length === 0) {
       return res.status(200).json({
         success: true,
         message: 'No new posts found',
@@ -48,9 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let synced = 0
     let updated = 0
     let errors = 0
+    let totalFetched = 0
 
-    // Process each WordPress post
-    for (const wpPost of wpResult.posts) {
+    // Helper to upsert a single post
+    const upsertPost = async (wpPost: WordPressPost) => {
       try {
         // Extract categories and tags
         const categories = wpPost._embedded?.['wp:term']?.[0]?.filter((term: any) => term.taxonomy === 'category') || []
@@ -95,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
           console.error('Error checking existing post:', checkError)
           errors++
-          continue
+          return
         }
 
         if (existingPost) {
@@ -146,13 +149,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // Process first page
+    totalFetched += firstResult.posts.length
+    for (const wpPost of firstResult.posts) {
+      await upsertPost(wpPost)
+    }
+
+    // Process remaining pages
+    const totalPages = Math.max(1, firstResult.totalPages)
+    for (let page = firstPage + 1; page <= totalPages; page++) {
+      const pageResult = await fetchWordPressPosts(page, perPage)
+      totalFetched += pageResult.posts.length
+      for (const wpPost of pageResult.posts) {
+        await upsertPost(wpPost)
+      }
+    }
+
     const result: WordPressPostSyncResult = {
       success: true,
       message: `Sync completed. Synced: ${synced}, Updated: ${updated}, Errors: ${errors}`,
       synced,
       updated,
       errors,
-      total_fetched: wpResult.posts.length
+      total_fetched: totalFetched
     }
 
     console.log('WordPress posts sync completed:', result)

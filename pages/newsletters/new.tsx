@@ -74,31 +74,42 @@ export default function NewNewsletter() {
   const fetchWordPressPosts = async () => {
     setLoadingPosts(true)
     try {
-      const response = await fetch('/api/wordpress/posts-stored?limit=20')
-      if (!response.ok) throw new Error('Failed to fetch posts')
-      
-      const data = await response.json()
-      // Convert stored posts to EmailPost format with word limit applied
-      const emailPosts = data.posts.map((post: any) => {
-        // Apply 20-word limit to excerpt
-        const excerpt = post.excerpt || ''
-        const words = excerpt.split(' ')
-        const limitedExcerpt = words.length > 20 
-          ? words.slice(0, 20).join(' ') + '...'
-          : excerpt
-        
-        return {
-          id: post.wp_post_id,
-          title: decodeHtmlEntities(post.title),
-          excerpt: decodeHtmlEntities(limitedExcerpt),
-          link: post.link,
-          featured_image: post.featured_image_url,
-          categories: post.categories.map((cat: any) => decodeHtmlEntities(cat.name)),
-          date: post.published_date
-        }
-      })
-      
-      setWpPosts(emailPosts)
+      const limit = 50
+      let page = 1
+      let totalPages = 1
+      const aggregated: EmailPost[] = []
+
+      do {
+        const response = await fetch(`/api/wordpress/posts-stored?page=${page}&limit=${limit}`)
+        if (!response.ok) throw new Error('Failed to fetch posts')
+
+        const data = await response.json()
+        totalPages = data.pagination?.totalPages || 1
+
+        // Convert stored posts to EmailPost format with word limit applied
+        const emailPosts: EmailPost[] = (data.posts || []).map((post: any) => {
+          const excerpt = post.excerpt || ''
+          const words = excerpt.split(' ')
+          const limitedExcerpt = words.length > 20 
+            ? words.slice(0, 20).join(' ') + '...'
+            : excerpt
+
+          return {
+            id: post.wp_post_id,
+            title: decodeHtmlEntities(post.title),
+            excerpt: decodeHtmlEntities(limitedExcerpt),
+            link: post.link,
+            featured_image: post.featured_image_url,
+            categories: (post.categories || []).map((cat: any) => decodeHtmlEntities(cat.name)),
+            date: post.published_date
+          }
+        })
+
+        aggregated.push(...emailPosts)
+        page += 1
+      } while (page <= totalPages)
+
+      setWpPosts(aggregated)
     } catch (error) {
       console.error('Error fetching WordPress posts:', error)
       showSnackbar('Error fetching WordPress posts', 'error')
