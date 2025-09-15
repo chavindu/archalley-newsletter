@@ -143,6 +143,14 @@ export default function EditNewsletter() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Newsletter Content
                 </h2>
+                {/* Render banner preview if present on record */}
+                {(newsletter as any).ad_snapshot_image_url_600 && (newsletter as any).ad_snapshot_target_url && (
+                  <div className="mb-4">
+                    <a href={(newsletter as any).ad_snapshot_target_url} target="_blank" rel="noreferrer">
+                      <img src={(newsletter as any).ad_snapshot_image_url_600} alt="Ad banner" className="w-full h-auto" />
+                    </a>
+                  </div>
+                )}
                 <div 
                   className="prose max-w-none"
                   dangerouslySetInnerHTML={{ __html: newsletter.content }}

@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { supabase, EmailList } from '@/lib/supabase'
+import { supabase, EmailList, AdBanner } from '@/lib/supabase'
 import { decodeHtmlEntities } from '@/lib/wordpress'
 import { EmailPost } from '@/lib/email'
 
@@ -34,6 +34,8 @@ export default function NewNewsletter() {
   const [categories, setCategories] = useState<string[]>([])
   const [activeCategories, setActiveCategories] = useState<string[]>([])
   const [tempSelectedIds, setTempSelectedIds] = useState<Record<number, boolean>>({})
+  const [adBanners, setAdBanners] = useState<AdBanner[]>([])
+  const [selectedBanner, setSelectedBanner] = useState<AdBanner | null>(null)
   
   // Send options
   const [sendOption, setSendOption] = useState<'now' | 'schedule'>('now')
@@ -45,7 +47,8 @@ export default function NewNewsletter() {
       await Promise.all([
         fetchEmailLists(),
         fetchWordPressPosts(),
-        fetchWordPressCategories()
+        fetchWordPressCategories(),
+        fetchAdBanners(),
       ])
     }
     
@@ -130,6 +133,15 @@ export default function NewNewsletter() {
     }
   }
 
+  const fetchAdBanners = async () => {
+    try {
+      const res = await fetch('/api/ad-banners?active=true&limit=100')
+      if (!res.ok) return
+      const json = await res.json()
+      setAdBanners(json.items || [])
+    } catch {}
+  }
+
   const addPostToNewsletter = (post: EmailPost) => {
     if (!selectedPosts.find(p => p.id === post.id)) {
       setSelectedPosts([...selectedPosts, post])
@@ -204,6 +216,12 @@ export default function NewNewsletter() {
       <div class="newsletter-content">
         <h2 style="color: #333; margin-bottom: 20px;">Latest from Archalley</h2>
         ${postsHtml}
+        ${selectedBanner ? `
+      <div class="post-card" style="margin-top: 20px;">
+        <a href="${selectedBanner.target_url}" target="_blank" rel="noopener noreferrer">
+          <img src="${selectedBanner.image_url_600}" alt="${selectedBanner.alt_text}" style="display:block;width:100%;height:auto;" />
+        </a>
+      </div>` : ''}
       </div>
     `
 
@@ -240,7 +258,10 @@ export default function NewNewsletter() {
       // Create newsletter data
       const newsletterData = {
         content: content,
-        posts: selectedPosts
+        posts: selectedPosts,
+        ad_banner_id: selectedBanner?.id || null,
+        ad_snapshot_image_url_600: selectedBanner ? selectedBanner.image_url_600 : null,
+        ad_snapshot_target_url: selectedBanner ? selectedBanner.target_url : null,
       }
 
       // Determine scheduled time
@@ -270,6 +291,9 @@ export default function NewNewsletter() {
           status: sendOption === 'now' ? 'draft' : 'scheduled',
           scheduled_at: scheduledAt,
           created_by: session?.user?.id,
+          ad_banner_id: selectedBanner?.id || null,
+          ad_snapshot_image_url_600: selectedBanner ? selectedBanner.image_url_600 : null,
+          ad_snapshot_target_url: selectedBanner ? selectedBanner.target_url : null,
         })
         .select()
         .single()
@@ -338,6 +362,31 @@ export default function NewNewsletter() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+              {/* Ad Banner Selection */}
+              <div className="card p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Ad Banner (optional)</h2>
+                {adBanners.length === 0 ? (
+                  <p className="text-sm text-gray-500">No active banners available.</p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {adBanners.map(b => (
+                        <label key={b.id} className={`flex items-center gap-3 p-3 border rounded cursor-pointer ${selectedBanner?.id === b.id ? 'border-blue-600 bg-blue-50' : 'hover:bg-gray-50'}`}>
+                          <input type="radio" name="ad" checked={selectedBanner?.id === b.id} onChange={() => setSelectedBanner(b)} />
+                          <img src={b.image_url_600} alt={b.alt_text} className="h-10" />
+                          <div className="text-sm">
+                            <div className="font-medium">{b.company_name}</div>
+                            <div className="text-gray-500 truncate max-w-[220px]">{b.target_url}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {selectedBanner && (
+                      <button className="text-sm text-red-600" onClick={() => setSelectedBanner(null)}>Clear selection</button>
+                    )}
+                  </div>
+                )}
+              </div>
               {/* Newsletter Title */}
               <div className="card p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">

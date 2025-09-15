@@ -59,6 +59,9 @@ export interface Newsletter {
   created_by: string
   created_at: string
   updated_at: string
+  ad_banner_id?: string
+  ad_snapshot_image_url_600?: string
+  ad_snapshot_target_url?: string
 }
 
 export interface NewsletterAnalytics {
@@ -68,4 +71,19 @@ export interface NewsletterAnalytics {
   opened_at?: string
   clicked_at?: string
   unsubscribed_at?: string
+}
+
+export interface AdBanner {
+  id: string
+  company_name: string
+  image_path: string
+  image_url_600: string
+  target_url: string
+  alt_text: string
+  status: boolean
+  start_date?: string
+  end_date?: string
+  deleted_at?: string
+  created_at: string
+  updated_at: string
 }

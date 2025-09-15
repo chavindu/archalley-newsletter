@@ -34,6 +34,7 @@ export default function Layout({ children }: LayoutProps) {
     { text: 'Dashboard', icon: HomeIcon, href: '/dashboard' },
     { text: 'Email Lists', icon: EnvelopeIcon, href: '/email-lists' },
     { text: 'Newsletters', icon: MegaphoneIcon, href: '/newsletters' },
+    { text: 'Ad Banners', icon: MegaphoneIcon, href: '/ad-banners' },
     { text: 'Analytics', icon: ChartBarIcon, href: '/analytics' },
   ]
 
@@ -55,6 +56,10 @@ export default function Layout({ children }: LayoutProps) {
         return 'Email Lists'
       case '/newsletters':
         return 'Newsletters'
+      case '/ad-banners':
+        return 'Ad Banners'
+      case '/ad-banners/new':
+        return 'Create Ad Banner'
       case '/analytics':
         return 'Analytics'
       case '/wordpress-posts':

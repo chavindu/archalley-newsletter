@@ -18,9 +18,10 @@ export interface EmailConfig {
   unsubscribeToken: string
   newsletterId?: string
   subscriberEmail?: string
+  banner?: { imageUrl: string; targetUrl: string; altText: string }
 }
 
-// Create SMTP transporter
+// Create SMTP transporter with connection pooling and rate limiting
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_SERVER,
   port: parseInt(process.env.SMTP_PORT || '587'),
@@ -29,10 +30,24 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USERNAME,
     pass: process.env.SMTP_PASSWORD,
   },
+  pool: true, // Enable connection pooling
+  maxConnections: 1, // Limit concurrent connections to 1
+  maxMessages: 100, // Maximum messages per connection
+  rateLimit: 10, // Maximum messages per second
+  rateDelta: 1000, // Rate limit window in milliseconds
+  connectionTimeout: 60000, // Connection timeout
+  greetingTimeout: 30000, // Greeting timeout
+  socketTimeout: 60000, // Socket timeout
 })
 
 // Generate newsletter HTML template
-export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: string, newsletterId?: string, subscriberEmail?: string): string {
+export function generateNewsletterHTML(
+  posts: EmailPost[], 
+  unsubscribeToken: string, 
+  newsletterId?: string, 
+  subscriberEmail?: string,
+  banner?: { imageUrl: string; targetUrl: string; altText: string }
+): string {
   const unsubscribeUrl = `${process.env.NEXTAUTH_URL}/api/unsubscribe?token=${unsubscribeToken}`
   
   // Generate tracking pixel URL
@@ -41,12 +56,18 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
     : ''
   
   // Helper function to wrap links with click tracking
+  const appendUtm = (url: string) => {
+    const hasQuery = url.includes('?')
+    const utm = 'utm_source=newsletter&utm_medium=email&utm_campaign=archalley'
+    return `${url}${hasQuery ? '&' : '?'}${utm}`
+  }
+
   const wrapLinkWithTracking = (url: string, linkText: string) => {
     if (!newsletterId || !subscriberEmail) {
-      return `<a href="${url}">${linkText}</a>`
+      return `<a href="${appendUtm(url)}" target="_blank" rel="noopener noreferrer">${linkText}</a>`
     }
-    const trackedUrl = `${process.env.NEXTAUTH_URL}/api/track/click?newsletterId=${newsletterId}&email=${encodeURIComponent(subscriberEmail)}&url=${encodeURIComponent(url)}`
-    return `<a href="${trackedUrl}">${linkText}</a>`
+    const trackedUrl = `${process.env.NEXTAUTH_URL}/api/track/click?newsletterId=${newsletterId}&email=${encodeURIComponent(subscriberEmail)}&url=${encodeURIComponent(appendUtm(url))}`
+    return `<a href="${trackedUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`
   }
   
   return `
@@ -384,6 +405,11 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
                     </table>
                 </div>
             `).join('')}
+            ${banner ? `
+            <div class="post-card" style="margin-top: 20px;">
+              ${wrapLinkWithTracking(banner.targetUrl, `<img src="${banner.imageUrl}" alt="${banner.altText}" style="display:block;width:100%;height:auto;" />`)}
+            </div>
+            ` : ''}
         </div>
         
         <div class="footer">
@@ -426,50 +452,81 @@ export function generateNewsletterHTML(posts: EmailPost[], unsubscribeToken: str
   `.trim()
 }
 
-// Send newsletter email
-export async function sendNewsletterEmail(config: EmailConfig): Promise<boolean> {
-  try {
-    console.log(`Attempting to send email to: ${config.to}`)
-    console.log('SMTP Config:', {
-      host: process.env.SMTP_SERVER,
-      port: process.env.SMTP_PORT,
-      user: process.env.SMTP_USERNAME,
-      from: process.env.FROM_EMAIL
-    })
+// Send newsletter email with retry logic
+export async function sendNewsletterEmail(config: EmailConfig, maxRetries: number = 3): Promise<boolean> {
+  let lastError: Error | null = null
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempting to send email to: ${config.to} (attempt ${attempt}/${maxRetries})`)
+      
+      if (attempt > 1) {
+        // Exponential backoff: 2^attempt seconds delay
+        const delayMs = Math.pow(2, attempt - 1) * 1000
+        console.log(`Waiting ${delayMs}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+      }
 
-    const html = generateNewsletterHTML(config.posts, config.unsubscribeToken, config.newsletterId, config.subscriberEmail)
-    
-    const info = await transporter.sendMail({
-      from: `"${process.env.FROM_NAME}" <${process.env.FROM_EMAIL}>`,
-      to: config.to,
-      subject: config.subject,
-      html: html,
-    })
+      const html = generateNewsletterHTML(config.posts, config.unsubscribeToken, config.newsletterId, config.subscriberEmail, config.banner)
+      
+      const info = await transporter.sendMail({
+        from: `"${process.env.FROM_NAME}" <${process.env.FROM_EMAIL}>`,
+        to: config.to,
+        subject: config.subject,
+        html: html,
+      })
 
-    console.log(`Email sent successfully to ${config.to}:`, info.messageId)
-    return true
-  } catch (error) {
-    console.error(`Error sending email to ${config.to}:`, error)
-    return false
+      console.log(`Email sent successfully to ${config.to}:`, info.messageId)
+      return true
+    } catch (error) {
+      lastError = error as Error
+      console.error(`Error sending email to ${config.to} (attempt ${attempt}/${maxRetries}):`, error)
+      
+      // Check if it's a retryable error
+      const errorWithCode = error as Error & { code?: string }
+      const isRetryable = errorWithCode && (
+        errorWithCode.message.includes('Concurrent connections limit exceeded') ||
+        errorWithCode.message.includes('Rate limit exceeded') ||
+        errorWithCode.message.includes('Temporary failure') ||
+        errorWithCode.message.includes('Connection timeout') ||
+        errorWithCode.message.includes('Socket timeout') ||
+        errorWithCode.code === 'ECONNRESET' ||
+        errorWithCode.code === 'ETIMEDOUT' ||
+        errorWithCode.code === 'ENOTFOUND'
+      )
+      
+      if (!isRetryable || attempt === maxRetries) {
+        console.error(`Final failure for ${config.to}:`, error)
+        return false
+      }
+      
+      console.log(`Retryable error detected for ${config.to}, will retry...`)
+    }
   }
+  
+  console.error(`All retry attempts failed for ${config.to}:`, lastError)
+  return false
 }
 
-// Send newsletter to multiple recipients
+// Send newsletter to multiple recipients with proper rate limiting
 export async function sendNewsletterToList(
   subject: string,
   posts: EmailPost[],
   subscribers: Array<{ email: string; unsubscribe_token: string }>,
-  newsletterId?: string
+  newsletterId?: string,
+  banner?: { imageUrl: string; targetUrl: string; altText: string }
 ): Promise<{ sent: number; failed: number }> {
   let sent = 0
   let failed = 0
 
-  // Send emails in batches to avoid overwhelming the SMTP server
-  const batchSize = 10
-  for (let i = 0; i < subscribers.length; i += batchSize) {
-    const batch = subscribers.slice(i, i + batchSize)
+  console.log(`Starting to send newsletter "${subject}" to ${subscribers.length} subscribers`)
+  console.log('Using sequential sending with rate limiting to avoid SMTP connection limits')
+
+  // Send emails sequentially to avoid concurrent connection limits
+  for (let i = 0; i < subscribers.length; i++) {
+    const subscriber = subscribers[i]
     
-    const promises = batch.map(async (subscriber) => {
+    try {
       const success = await sendNewsletterEmail({
         to: subscriber.email,
         subject,
@@ -477,23 +534,29 @@ export async function sendNewsletterToList(
         unsubscribeToken: subscriber.unsubscribe_token,
         newsletterId,
         subscriberEmail: subscriber.email,
+        banner,
       })
       
       if (success) {
         sent++
+        console.log(`✓ Email sent to ${subscriber.email} (${i + 1}/${subscribers.length})`)
       } else {
         failed++
+        console.log(`✗ Failed to send email to ${subscriber.email} (${i + 1}/${subscribers.length})`)
       }
-    })
-
-    await Promise.all(promises)
+    } catch (error) {
+      failed++
+      console.error(`✗ Unexpected error sending email to ${subscriber.email} (${i + 1}/${subscribers.length}):`, error)
+    }
     
-    // Add a small delay between batches
-    if (i + batchSize < subscribers.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+    // Add a small delay between emails to respect rate limits
+    // This helps avoid overwhelming the SMTP server
+    if (i < subscribers.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 500)) // 500ms delay between emails
     }
   }
 
+  console.log(`Newsletter sending completed. Sent: ${sent}, Failed: ${failed}`)
   return { sent, failed }
 }
 

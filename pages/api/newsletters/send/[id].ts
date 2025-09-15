@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { supabase } from '@/lib/supabase'
 import { sendNewsletterToList, EmailPost } from '@/lib/email'
+import { supabase as supabaseClient } from '@/lib/supabase'
 import { authOptions } from '../../auth/[...nextauth]'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -57,6 +58,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Parse newsletter content
     const content = JSON.parse(newsletter.content)
     const posts: EmailPost[] = content.posts
+    let banner = newsletter.ad_snapshot_image_url_600 && newsletter.ad_snapshot_target_url
+      ? { imageUrl: newsletter.ad_snapshot_image_url_600, targetUrl: newsletter.ad_snapshot_target_url, altText: `${newsletter.title} Ad` }
+      : null
+
+    // If no snapshot, try to fetch live banner by ID and use its current values
+    if (!banner && newsletter.ad_banner_id) {
+      const { data: liveBanner } = await supabase
+        .from('ad_banners')
+        .select('image_url_600, target_url, alt_text, status, start_date, end_date, deleted_at')
+        .eq('id', newsletter.ad_banner_id)
+        .single()
+      if (liveBanner) {
+        const today = new Date().toISOString().slice(0,10)
+        const startOk = !liveBanner.start_date || liveBanner.start_date.slice(0,10) <= today
+        const endOk = !liveBanner.end_date || liveBanner.end_date.slice(0,10) >= today
+        if (liveBanner.status && !liveBanner.deleted_at && startOk && endOk) {
+          banner = { imageUrl: liveBanner.image_url_600, targetUrl: liveBanner.target_url, altText: liveBanner.alt_text }
+        }
+      }
+    }
 
     console.log(`Sending newsletter "${newsletter.title}" to ${subscribers.length} subscribers`)
     console.log('Subscribers:', subscribers.map(s => s.email))
@@ -66,7 +87,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       newsletter.title,
       posts,
       subscribers,
-      id as string
+      id as string,
+      banner || undefined
     )
 
     console.log('Send result:', result)

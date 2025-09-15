@@ -88,3 +88,49 @@ CREATE POLICY "Users can view analytics" ON newsletter_analytics FOR SELECT USIN
 CREATE POLICY "Users can insert analytics" ON newsletter_analytics FOR INSERT WITH CHECK (true);
 -- Allow updates to tracking fields from public (needed for open/click tracking)
 CREATE POLICY "Users can update analytics" ON newsletter_analytics FOR UPDATE USING (true) WITH CHECK (true);
+
+-- Ad banners table
+CREATE TABLE IF NOT EXISTS ad_banners (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  company_name VARCHAR(255) NOT NULL,
+  image_path TEXT NOT NULL, -- storage path in default public bucket
+  image_url_600 TEXT NOT NULL, -- resized email-safe URL
+  target_url TEXT NOT NULL,
+  alt_text VARCHAR(255) NOT NULL,
+  status BOOLEAN DEFAULT TRUE, -- manual enable/disable
+  start_date DATE,
+  end_date DATE,
+  deleted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Extend newsletters with ad banner references and snapshot
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name='newsletters' AND column_name='ad_banner_id'
+  ) THEN
+    ALTER TABLE newsletters ADD COLUMN ad_banner_id UUID REFERENCES ad_banners(id);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name='newsletters' AND column_name='ad_snapshot_image_url_600'
+  ) THEN
+    ALTER TABLE newsletters ADD COLUMN ad_snapshot_image_url_600 TEXT;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name='newsletters' AND column_name='ad_snapshot_target_url'
+  ) THEN
+    ALTER TABLE newsletters ADD COLUMN ad_snapshot_target_url TEXT;
+  END IF;
+END $$;
+
+-- Enable RLS for ad_banners
+ALTER TABLE ad_banners ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for ad_banners (app enforces role auth in API; allow through here)
+CREATE POLICY "Users can view all ad banners" ON ad_banners FOR SELECT USING (true);
+CREATE POLICY "Users can manage ad banners" ON ad_banners FOR ALL USING (true) WITH CHECK (true);
