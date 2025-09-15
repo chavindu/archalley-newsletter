@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { supabase } from '@/lib/supabase'
-import { fetchWordPressPosts, convertWordPressPostsToEmailPosts, WordPressPost, decodeHtmlEntities } from '@/lib/wordpress'
+import { fetchWordPressPosts, convertWordPressPostsToEmailPosts, WordPressPost } from '@/lib/wordpress'
+import { decodeHtmlEntities } from '@/lib/email'
 import { authOptions } from '../auth/[...nextauth]'
 import { StoredWordPressPost, WordPressPostSyncResult } from '@/lib/wordpress-posts'
 

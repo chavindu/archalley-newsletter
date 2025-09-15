@@ -13,7 +13,7 @@ import {
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { StoredWordPressPost } from '@/lib/wordpress-posts'
-import { decodeHtmlEntities } from '@/lib/wordpress'
+import { decodeHtmlEntities } from '@/lib/email'
 import { useRouter } from 'next/router'
 
 interface PaginationInfo {

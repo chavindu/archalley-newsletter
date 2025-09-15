@@ -15,7 +15,7 @@ import {
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { supabase, EmailList, AdBanner } from '@/lib/supabase'
-import { decodeHtmlEntities } from '@/lib/wordpress'
+import { decodeHtmlEntities } from '@/lib/email'
 import { EmailPost } from '@/lib/email'
 
 export default function NewNewsletter() {
