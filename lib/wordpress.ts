@@ -1,4 +1,5 @@
-import { EmailPost, stripHtmlTags, decodeHtmlEntities } from './email'
+import { EmailPost } from './email'
+import { stripHtmlTags, decodeHtmlEntities } from './utils'
 
 export interface WordPressPost {
   id: number
