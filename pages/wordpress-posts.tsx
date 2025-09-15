@@ -138,7 +138,7 @@ export default function WordPressPosts() {
 
       const result = await response.json()
       showSnackbar(result.message, 'success')
-      fetchPosts() // Refresh the list
+      fetchPosts(1) // Refresh the list
     } catch (error) {
       console.error('Error syncing posts:', error)
       showSnackbar('Error syncing posts', 'error')
