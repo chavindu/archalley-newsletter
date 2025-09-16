@@ -11,6 +11,8 @@
 
 ---
 
+![Home](public/screenshots/home.png)
+
 ## What is the Archalley Newsletter System?
 
 The Archalley Newsletter System helps you send beautiful email newsletters to your subscribers. The system automatically pulls the latest blog posts from the Archalley website and lets you easily create and send newsletters.
@@ -53,7 +55,7 @@ Use the menu on the left to access different sections:
 - **Ad Banners**: Manage promotional banners
 - **Analytics**: See how your newsletters are performing
 
-![Navigation sidebar](public/screenshots/home.png)
+![Navigation sidebar](public/screenshots/navigation-menu.png)
 
 ---
 
