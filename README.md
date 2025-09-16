@@ -30,7 +30,7 @@ The Archalley Newsletter System helps you send beautiful email newsletters to yo
 2. Click the **"Sign in with Google"** button
 3. Use your authorized Google account to sign in
 
-*[Screenshot placeholder: Login screen]*
+![Login screen](public/screenshots/login-page.png)
 
 **Important:** Only authorized Google accounts can access the system. If you get an "Access Denied" error, contact your system administrator.
 
@@ -42,7 +42,7 @@ After logging in, you'll see the main dashboard showing:
 - **Total Newsletters**: All newsletters you've created
 - **Sent Newsletters**: Newsletters that have been successfully sent
 
-*[Screenshot placeholder: Dashboard overview]*
+![Dashboard overview](public/screenshots/dashboard.png)
 
 ### Navigation Menu
 
@@ -53,7 +53,7 @@ Use the menu on the left to access different sections:
 - **Ad Banners**: Manage promotional banners
 - **Analytics**: See how your newsletters are performing
 
-*[Screenshot placeholder: Navigation sidebar]*
+![Navigation sidebar](public/screenshots/home.png)
 
 ---
 
@@ -70,7 +70,7 @@ Email lists help you organize your subscribers. You might have different lists f
    - **Description**: Add a brief description (optional)
 4. Click **"Save"**
 
-*[Screenshot placeholder: Create email list form]*
+![Create email list form](public/screenshots/create-email-list.png)
 
 ### How to Add Subscribers to Your Lists
 
@@ -82,7 +82,7 @@ Email lists help you organize your subscribers. You might have different lists f
 4. Type in the email address
 5. Click **"Add"**
 
-*[Screenshot placeholder: Add subscriber form]*
+![Add subscriber form](public/screenshots/add-subscriber-form.png)
 
 #### Adding Many Subscribers at Once (CSV Import)
 
@@ -94,7 +94,7 @@ If you have many email addresses to add:
 4. Review the list of emails to be added
 5. Click **"Import"** to add them all
 
-*[Screenshot placeholder: CSV import interface]*
+![CSV import interface](public/screenshots/add-subscriber-form.png)
 
 **Your CSV file should look like this:**
 ```
@@ -113,7 +113,7 @@ Each subscriber has a status:
 
 You can see and change these statuses from your subscriber list.
 
-*[Screenshot placeholder: Subscriber management]*
+![Subscriber management](public/screenshots/subscriber-management.png)
 
 ## Creating & Sending Newsletters
 
@@ -129,7 +129,7 @@ Creating newsletters is easy! The system automatically pulls the latest blog pos
 6. Choose when to send it
 7. Click **"Save & Send"** or **"Schedule"**
 
-*[Screenshot placeholder: Newsletter creation form]*
+![Newsletter creation form](public/screenshots/newsletter-creation-form.png)
 
 ### Choosing Blog Posts for Your Newsletter
 
@@ -139,7 +139,7 @@ The system shows you all the latest posts from the Archalley website:
 - Click on category buttons to see only posts from specific topics
 - This helps you find the right posts faster
 
-*[Screenshot placeholder: Post category filters]*
+![Post category filters](public/screenshots/post-categories-filter.png)
 
 #### Selecting Posts
 1. Look through the available blog posts
@@ -147,7 +147,7 @@ The system shows you all the latest posts from the Archalley website:
 3. Selected posts will appear in a "Selected Posts" section
 4. You can drag posts to reorder them
 
-*[Screenshot placeholder: Post selection interface]*
+![Post selection interface](public/screenshots/post-selection-interface.png)
 
 **Tip:** Choose 3-5 high-quality posts for the best newsletter experience.
 
@@ -157,7 +157,7 @@ The system shows you all the latest posts from the Archalley website:
 2. Check the boxes next to the lists you want to send to
 3. You can select multiple lists - the system won't send duplicates to people on multiple lists
 
-*[Screenshot placeholder: Email list selection]*
+![Email list selection](public/screenshots/email-list-selection.png)
 
 ### When to Send Your Newsletter
 
@@ -172,7 +172,7 @@ You have two options:
 - Pick a date and time
 - Your newsletter will be sent automatically at that time
 
-*[Screenshot placeholder: Send options]*
+![Send options](public/screenshots/send-options.png)
 
 ### Managing Your Newsletters
 
@@ -188,7 +188,7 @@ After creating newsletters, you can see them all in the Newsletters section:
 - **Resend**: Send the same newsletter again
 - **Delete**: Remove a newsletter (be careful!)
 
-*[Screenshot placeholder: Newsletter management]*
+![Newsletter management](public/screenshots/newsletter-management.png)
 
 ### What Goes in Your Newsletter
 
@@ -218,7 +218,7 @@ Ad banners are promotional images that appear in your newsletters. They can adve
 4. Upload your banner image
 5. Click **"Save"**
 
-*[Screenshot placeholder: Create ad banner form]*
+![Create ad banner form](public/screenshots/create-ad-banner-form.png)
 
 ### Image Requirements
 
@@ -227,7 +227,7 @@ When uploading banner images:
 - **File types**: JPG, PNG, WebP, or GIF files work
 - **Image shape**: The system will automatically resize your image to the right shape
 
-*[Screenshot placeholder: Image upload interface]*
+![Image upload interface](public/screenshots/image-upload-interface.png)
 
 ### Managing Your Ad Banners
 
@@ -243,7 +243,7 @@ You can see all your ad banners in the Ad Banners section:
 - **Turn On/Off**: Activate or deactivate banners
 - **Delete**: Remove banners you no longer need
 
-*[Screenshot placeholder: Ad banner management]*
+![Ad banner management](public/screenshots/ad-banner-management.png)
 
 ### Adding Banners to Your Newsletters
 
@@ -252,7 +252,7 @@ When creating a newsletter:
 2. Choose from your active banners
 3. The banner will appear in your newsletter between the blog posts and footer
 
-*[Screenshot placeholder: Ad banner selection in newsletter]*
+![Ad banner selection in newsletter](public/screenshots/ad-banner-selection-in-newsletter.png)
 
 ## Viewing Analytics
 
@@ -263,7 +263,7 @@ Analytics help you understand how well your newsletters are performing. You can 
 1. Click **"Analytics"** in the left menu
 2. You'll see an overview of all your newsletter performance
 
-*[Screenshot placeholder: Analytics dashboard]*
+![Analytics dashboard](public/screenshots/analytics-dashboard.png)
 
 ### Understanding Your Numbers
 
@@ -279,8 +279,6 @@ For each newsletter, you can see:
 - **Click Rate**: What percentage clicked on links
 - **Send Date**: When you sent the newsletter
 
-*[Screenshot placeholder: Analytics metrics]*
-
 ### What Makes Good Performance?
 
 - **Open Rate**: 20% or higher is good (this means 1 in 5 people opened your email)
@@ -294,7 +292,7 @@ For each newsletter, you can see:
 - **Pick interesting content**: Choose blog posts your audience will find valuable
 - **Don't send too often**: Once or twice a week is usually enough
 
-*[Screenshot placeholder: Performance trends]*
+![Performance trends](public/screenshots/performance-trends.png)
 
 ---
 
