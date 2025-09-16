@@ -86,25 +86,6 @@ Email lists help you organize your subscribers. You might have different lists f
 
 ![Add subscriber form](public/screenshots/add-subscriber-form.png)
 
-#### Adding Many Subscribers at Once (CSV Import)
-
-If you have many email addresses to add:
-
-1. From your email list page, click **"Import CSV"**
-2. Create a simple file with one email per line, or download the template
-3. Upload your file
-4. Review the list of emails to be added
-5. Click **"Import"** to add them all
-
-![CSV import interface](public/screenshots/add-subscriber-form.png)
-
-**Your CSV file should look like this:**
-```
-email
-john@example.com
-jane@example.com
-mike@example.com
-```
 
 ### Understanding Subscriber Status
 
