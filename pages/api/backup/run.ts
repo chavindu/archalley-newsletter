@@ -15,7 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Check if this is a manual trigger or cron job
     const isManual = req.query.manual === '1'
-    const isCron = req.headers['x-vercel-cron'] === '1'
+    const authHeader = req.headers.authorization
+    const cronSecret = process.env.CRON_SECRET
+    const isCron = authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`
 
     if (!isManual && !isCron) {
       return res.status(401).json({ message: 'Unauthorized' })
