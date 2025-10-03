@@ -2,16 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/wordpress/sync-posts",
-      "schedule": "30 21 * * *"
-    },
-    {
-      "path": "/api/wordpress/sync-emails", 
+      "path": "/api/wordpress/sync-all",
       "schedule": "30 20 * * *"
     },
     {
       "path": "/api/backup/run",
-      "schedule": "30 20 * * *"
+      "schedule": "30 21 * * *"
     }
   ]
 }
