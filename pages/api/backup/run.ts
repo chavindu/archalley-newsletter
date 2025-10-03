@@ -6,7 +6,8 @@ import { createBackup } from '@/lib/backup-exporter'
 import { uploadToOneDrive, deleteOldBackups } from '@/lib/onedrive-upload'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  // Accept both GET (for Vercel cron jobs) and POST (for manual calls)
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
@@ -17,9 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isManual = req.query.manual === '1'
     const authHeader = req.headers.authorization
     const cronSecret = process.env.CRON_SECRET
-    const isCron = authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`
+    const isVercelCron = req.headers['x-vercel-cron'] === '1'
+    const isCronWithSecret = authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`
 
-    if (!isManual && !isCron) {
+    if (!isManual && !isVercelCron && !isCronWithSecret) {
       return res.status(401).json({ message: 'Unauthorized' })
     }
 
