@@ -134,3 +134,64 @@ ALTER TABLE ad_banners ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for ad_banners (app enforces role auth in API; allow through here)
 CREATE POLICY "Users can view all ad banners" ON ad_banners FOR SELECT USING (true);
 CREATE POLICY "Users can manage ad banners" ON ad_banners FOR ALL USING (true) WITH CHECK (true);
+
+-- App settings table for backup configuration
+CREATE TABLE IF NOT EXISTS app_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  onedrive_backup_path TEXT NOT NULL DEFAULT '/Backups/ArchAlley',
+  backup_retention_days INTEGER NOT NULL DEFAULT 14,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- OAuth tokens table for Microsoft Graph authentication
+CREATE TABLE IF NOT EXISTS oauth_tokens (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  provider TEXT NOT NULL DEFAULT 'microsoft',
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  access_token TEXT NOT NULL, -- encrypted
+  refresh_token TEXT NOT NULL, -- encrypted
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(provider, user_id)
+);
+
+-- Backup runs logging table
+CREATE TABLE IF NOT EXISTS backup_runs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  finished_at TIMESTAMP WITH TIME ZONE,
+  status TEXT NOT NULL CHECK (status IN ('running', 'success', 'failed')),
+  file_name TEXT,
+  file_size_bytes BIGINT,
+  error TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert default app settings
+INSERT INTO app_settings (onedrive_backup_path, backup_retention_days) 
+VALUES ('/Backups/ArchAlley', 14)
+ON CONFLICT DO NOTHING;
+
+-- Enable RLS for new tables
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE oauth_tokens ENABLE ROW LEVEL SECURITY;
+ALTER TABLE backup_runs ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for new tables
+CREATE POLICY "Users can view app settings" ON app_settings FOR SELECT USING (true);
+CREATE POLICY "Only superadmins can manage app settings" ON app_settings FOR ALL USING (
+  EXISTS (SELECT 1 FROM users WHERE email = auth.jwt() ->> 'email' AND role = 'superadmin')
+);
+
+CREATE POLICY "Users can view their own oauth tokens" ON oauth_tokens FOR SELECT USING (
+  user_id = (SELECT id FROM users WHERE email = auth.jwt() ->> 'email')
+);
+CREATE POLICY "Only superadmins can manage oauth tokens" ON oauth_tokens FOR ALL USING (
+  EXISTS (SELECT 1 FROM users WHERE email = auth.jwt() ->> 'email' AND role = 'superadmin')
+);
+
+CREATE POLICY "Users can view backup runs" ON backup_runs FOR SELECT USING (true);
+CREATE POLICY "System can insert backup runs" ON backup_runs FOR INSERT WITH CHECK (true);
+CREATE POLICY "System can update backup runs" ON backup_runs FOR UPDATE USING (true) WITH CHECK (true);

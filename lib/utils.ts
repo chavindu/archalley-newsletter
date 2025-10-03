@@ -41,3 +41,67 @@ export function decodeHtmlEntities(input: string): string {
     // named entities
     .replace(/&([a-zA-Z]+);/g, (_m, name) => (name in named ? named[name] : _m))
 }
+
+// AES-256-GCM encryption helpers for OAuth tokens
+export async function encryptToken(plaintext: string): Promise<string> {
+  const key = process.env.TOKEN_ENCRYPTION_KEY
+  if (!key) {
+    throw new Error('TOKEN_ENCRYPTION_KEY environment variable is required')
+  }
+
+  const keyBuffer = Buffer.from(key, 'base64')
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const algorithm = { name: 'AES-GCM', iv }
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyBuffer,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
+  )
+
+  const encrypted = await crypto.subtle.encrypt(
+    algorithm,
+    cryptoKey,
+    new TextEncoder().encode(plaintext)
+  )
+
+  // Combine IV + encrypted data + auth tag
+  const combined = new Uint8Array(iv.length + encrypted.byteLength)
+  combined.set(iv, 0)
+  combined.set(new Uint8Array(encrypted), iv.length)
+
+  return Buffer.from(combined).toString('base64')
+}
+
+export async function decryptToken(encryptedData: string): Promise<string> {
+  const key = process.env.TOKEN_ENCRYPTION_KEY
+  if (!key) {
+    throw new Error('TOKEN_ENCRYPTION_KEY environment variable is required')
+  }
+
+  const keyBuffer = Buffer.from(key, 'base64')
+  const combined = Buffer.from(encryptedData, 'base64')
+  
+  const iv = combined.subarray(0, 12)
+  const encrypted = combined.subarray(12)
+  
+  const algorithm = { name: 'AES-GCM', iv }
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyBuffer,
+    { name: 'AES-GCM' },
+    false,
+    ['decrypt']
+  )
+
+  const decrypted = await crypto.subtle.decrypt(
+    algorithm,
+    cryptoKey,
+    encrypted
+  )
+
+  return new TextDecoder().decode(decrypted)
+}

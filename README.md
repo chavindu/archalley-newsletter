@@ -6,8 +6,9 @@
 3. [Creating & Sending Newsletters](#creating--sending-newsletters)
 4. [Managing Ad Banners](#managing-ad-banners)
 5. [Viewing Analytics](#viewing-analytics)
-6. [Common Tasks](#common-tasks)
-7. [Getting Help](#getting-help)
+6. [Database Backups](#database-backups)
+7. [Common Tasks](#common-tasks)
+8. [Getting Help](#getting-help)
 
 ---
 
@@ -23,6 +24,7 @@ The Archalley Newsletter System helps you send beautiful email newsletters to yo
 - Add promotional banners to newsletters
 - Track how many people open and click your emails
 - Schedule newsletters to send later
+- **Automatically backup your database to OneDrive**
 
 ## Getting Started
 
@@ -54,6 +56,7 @@ Use the menu on the left to access different sections:
 - **Newsletters**: Create and send newsletters
 - **Ad Banners**: Manage promotional banners
 - **Analytics**: See how your newsletters are performing
+- **Backups**: Configure and manage database backups (Superadmin only)
 
 ![Navigation sidebar](public/screenshots/navigation-menu.png)
 
@@ -276,6 +279,95 @@ For each newsletter, you can see:
 - **Don't send too often**: Once or twice a week is usually enough
 
 ![Performance trends](public/screenshots/performance-trends.png)
+
+---
+
+## Database Backups
+
+The system automatically backs up your database to OneDrive every day at 2:00 AM Sri Lankan time. This ensures your data is safe and can be restored if needed.
+
+### How Automatic Backups Work
+
+- **Daily Schedule**: Backups run automatically every day at 2:00 AM Sri Lankan time (8:30 PM UTC)
+- **OneDrive Storage**: Files are uploaded to your OneDrive Business account
+- **Automatic Cleanup**: Old backups are automatically deleted based on your retention settings
+- **Multiple Formats**: Each backup includes both JSON and CSV files for all tables
+
+### Setting Up OneDrive Backups (Superadmin Only)
+
+Only superadmin users can configure backup settings:
+
+1. **Go to Backup Management**: Click "Backups" in the left menu (only visible to superadmins)
+2. **Configure OneDrive Path**: Set where backups should be stored in your OneDrive
+3. **Set Retention Period**: Choose how many days to keep old backups (default: 14 days)
+4. **Connect OneDrive**: Click "Connect OneDrive" to authorize the system to access your OneDrive
+5. **Test Backup**: Run a test backup to make sure everything works
+
+### Backup File Format
+
+Each backup creates a zip file containing:
+- **JSON files**: Complete data for each table in JSON format
+- **CSV files**: Same data in CSV format for easy import into other systems
+- **Metadata file**: Information about when the backup was created and which tables were included
+
+### Backup File Names
+
+Backup files are named with timestamps: `backup-YYYY-MM-DDTHH-mm-ssZ.zip`
+
+Example: `backup-2024-01-15T20-30-00Z.zip`
+
+### What Gets Backed Up
+
+The system backs up all important tables:
+- **Users**: All user accounts and roles
+- **Email Lists**: Your subscriber lists
+- **Subscribers**: All email addresses and subscription statuses
+- **Newsletters**: All newsletters you've created
+- **Newsletter Analytics**: Open and click tracking data
+- **Ad Banners**: All promotional banners
+- **App Settings**: System configuration including backup settings
+- **OAuth Tokens**: Encrypted OneDrive connection tokens
+- **Backup Runs**: Log of all backup operations
+
+### Monitoring Backup Status
+
+In the Backup Management section, you can see:
+- **Recent Backup Runs**: List of the last 10 backup operations
+- **Success/Failure Status**: Whether each backup completed successfully
+- **File Sizes**: How large each backup file is
+- **Duration**: How long each backup took to complete
+- **Error Messages**: If a backup failed, you'll see what went wrong
+
+### Manual Backup Testing
+
+You can run a test backup anytime:
+1. Go to Backup Management
+2. Click "Run Test Backup"
+3. The system will create a backup immediately
+4. Check the status in the Recent Backup Runs table
+
+### Troubleshooting Backups
+
+**If backups are failing:**
+- Check that OneDrive is properly connected
+- Verify the backup path exists in your OneDrive
+- Ensure you have enough storage space in OneDrive
+- Check the error messages in the Recent Backup Runs table
+
+**If you can't see the Backup Management page:**
+- Only superadmin users can access backup settings
+- Contact your system administrator if you need superadmin access
+
+**If OneDrive connection is lost:**
+- Click "Reconnect OneDrive" to re-authorize the system
+- You may need to sign in to your Microsoft account again
+
+### Backup Security
+
+- **Encrypted Storage**: OAuth tokens are encrypted before being stored in the database
+- **Secure Upload**: Files are uploaded using Microsoft's secure Graph API
+- **Access Control**: Only authorized superadmin accounts can configure backups
+- **Automatic Cleanup**: Old backups are automatically deleted to save space
 
 ---
 

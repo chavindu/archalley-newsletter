@@ -11,6 +11,7 @@ import {
   NewspaperIcon,
   AtSymbolIcon,
   WrenchScrewdriverIcon,
+  ServerIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -44,7 +45,8 @@ export default function Layout({ children }: LayoutProps) {
       { text: 'WordPress Posts', icon: NewspaperIcon, href: '/wordpress-posts' },
       { text: 'WordPress Emails', icon: AtSymbolIcon, href: '/wordpress-emails' },
       { text: 'Test Email', icon: WrenchScrewdriverIcon, href: '/test-email' },
-      { text: 'Users', icon: UsersIcon, href: '/users' }
+      { text: 'Users', icon: UsersIcon, href: '/users' },
+      { text: 'Backups', icon: ServerIcon, href: '/admin/backups' }
     )
   }
 
@@ -70,6 +72,8 @@ export default function Layout({ children }: LayoutProps) {
         return 'Test Email'
       case '/users':
         return 'Users'
+      case '/admin/backups':
+        return 'Backup Management'
       default:
         return 'Archalley Newsletter'
     }
