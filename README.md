@@ -147,25 +147,17 @@ The system shows you all the latest posts from the Archalley website:
 
 ### When to Send Your Newsletter
 
-You have two options:
+Currently, newsletters are sent immediately after creation. The scheduling functionality is temporarily disabled and will be implemented in a future update.
 
-#### Send Right Now
-- Select "Send Now"
+#### Send Immediately
 - Your newsletter will be sent immediately after you save it
-
-#### Schedule for Later
-- Select "Schedule"
-- Pick a date and time
-- Your newsletter will be sent automatically at that time
-
-![Send options](public/screenshots/send-options.png)
+- No scheduling options are available at this time
 
 ### Managing Your Newsletters
 
 After creating newsletters, you can see them all in the Newsletters section:
 
 - **Draft**: Not sent yet (you can still edit these)
-- **Scheduled**: Will be sent at the time you chose
 - **Sent**: Already delivered to subscribers
 
 #### What You Can Do:

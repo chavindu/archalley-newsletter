@@ -8,7 +8,6 @@ import {
   NewspaperIcon,
   PlusIcon,
   XMarkIcon,
-  ClockIcon,
   PaperAirplaneIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline'
@@ -37,10 +36,8 @@ export default function NewNewsletter() {
   const [adBanners, setAdBanners] = useState<AdBanner[]>([])
   const [selectedBanner, setSelectedBanner] = useState<AdBanner | null>(null)
   
-  // Send options
-  const [sendOption, setSendOption] = useState<'now' | 'schedule'>('now')
-  const [scheduleDate, setScheduleDate] = useState('')
-  const [scheduleTime, setScheduleTime] = useState('')
+  // Send options - scheduling disabled for now
+  const [sendOption] = useState<'now'>('now')
 
   useEffect(() => {
     const initializePage = async () => {
@@ -244,10 +241,7 @@ export default function NewNewsletter() {
       return
     }
 
-    if (sendOption === 'schedule' && (!scheduleDate || !scheduleTime)) {
-      showSnackbar('Please select a date and time for scheduling', 'error')
-      return
-    }
+    // Scheduling validation removed - scheduling is disabled
 
     setLoading(true)
 
@@ -264,19 +258,15 @@ export default function NewNewsletter() {
         ad_snapshot_target_url: selectedBanner ? selectedBanner.target_url : null,
       }
 
-      // Determine scheduled time
+      // Scheduling disabled - always send immediately
       let scheduledAt = null
-      if (sendOption === 'schedule') {
-        const scheduleDateTime = new Date(`${scheduleDate}T${scheduleTime}`)
-        scheduledAt = scheduleDateTime.toISOString()
-      }
 
       console.log('Creating newsletter with data:', {
         title,
         content: newsletterData,
         selected_posts: selectedPosts.map(p => p.id),
         email_list_ids: selectedEmailLists,
-        status: sendOption === 'now' ? 'draft' : 'scheduled',
+        status: 'draft', // Always create as draft since scheduling is disabled
         scheduled_at: scheduledAt,
         created_by: session?.user?.id,
       })
@@ -288,7 +278,7 @@ export default function NewNewsletter() {
           content: JSON.stringify(newsletterData),
           selected_posts: JSON.stringify(selectedPosts.map(p => p.id)),
           email_list_ids: selectedEmailLists,
-          status: sendOption === 'now' ? 'draft' : 'scheduled',
+          status: 'draft', // Always create as draft since scheduling is disabled
           scheduled_at: scheduledAt,
           created_by: session?.user?.id,
           ad_banner_id: selectedBanner?.id || null,
@@ -303,23 +293,19 @@ export default function NewNewsletter() {
         throw error
       }
 
-      if (sendOption === 'now') {
-        // Send immediately
-        const sendResponse = await fetch(`/api/newsletters/send/${data.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+      // Always send immediately since scheduling is disabled
+      const sendResponse = await fetch(`/api/newsletters/send/${data.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-        if (sendResponse.ok) {
-          const sendResult = await sendResponse.json()
-          showSnackbar(`Newsletter sent successfully! Sent to ${sendResult.sent} subscribers.`, 'success')
-        } else {
-          showSnackbar('Newsletter created but failed to send. Please try sending manually.', 'error')
-        }
+      if (sendResponse.ok) {
+        const sendResult = await sendResponse.json()
+        showSnackbar(`Newsletter sent successfully! Sent to ${sendResult.sent} subscribers.`, 'success')
       } else {
-        showSnackbar('Newsletter scheduled successfully!', 'success')
+        showSnackbar('Newsletter created but failed to send. Please try sending manually.', 'error')
       }
 
       router.push('/newsletters')
@@ -620,72 +606,24 @@ export default function NewNewsletter() {
                 </div>
               </div>
 
-              {/* Send Options */}
+              {/* Send Options - Scheduling disabled */}
               <div className="card p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Send Options
                 </h3>
                 
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="sendOption"
-                        value="now"
-                        checked={sendOption === 'now'}
-                        onChange={(e) => setSendOption(e.target.value as 'now' | 'schedule')}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                      />
-                      <span className="ml-3 text-sm text-gray-700 flex items-center">
-                        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                        Send Now
-                      </span>
-                    </label>
-                    
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="sendOption"
-                        value="schedule"
-                        checked={sendOption === 'schedule'}
-                        onChange={(e) => setSendOption(e.target.value as 'now' | 'schedule')}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                      />
-                      <span className="ml-3 text-sm text-gray-700 flex items-center">
-                        <ClockIcon className="h-4 w-4 mr-2" />
-                        Schedule for Later
-                      </span>
-                    </label>
-                  </div>
-
-                  {sendOption === 'schedule' && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Date
-                        </label>
-                        <input
-                          type="date"
-                          value={scheduleDate}
-                          onChange={(e) => setScheduleDate(e.target.value)}
-                          min={new Date().toISOString().split('T')[0]}
-                          className="input-field"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Time
-                        </label>
-                        <input
-                          type="time"
-                          value={scheduleTime}
-                          onChange={(e) => setScheduleTime(e.target.value)}
-                          className="input-field"
-                        />
-                      </div>
+                  <div className="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <PaperAirplaneIcon className="h-5 w-5 text-blue-600 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900">Send Immediately</p>
+                      <p className="text-xs text-blue-700">Newsletter will be sent right away after creation</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    <p className="font-medium">Note:</p>
+                    <p>Scheduling functionality is temporarily disabled. All newsletters are sent immediately.</p>
+                  </div>
                 </div>
               </div>
 
@@ -699,21 +637,12 @@ export default function NewNewsletter() {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {sendOption === 'now' ? 'Sending...' : 'Scheduling...'}
+                      Sending...
                     </>
                   ) : (
                     <>
-                      {sendOption === 'now' ? (
-                        <>
-                          <PaperAirplaneIcon className="h-5 w-5 mr-2" />
-                          Send Newsletter
-                        </>
-                      ) : (
-                        <>
-                          <ClockIcon className="h-5 w-5 mr-2" />
-                          Schedule Newsletter
-                        </>
-                      )}
+                      <PaperAirplaneIcon className="h-5 w-5 mr-2" />
+                      Send Newsletter
                     </>
                   )}
                 </button>
